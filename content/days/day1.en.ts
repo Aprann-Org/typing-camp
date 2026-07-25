@@ -5,17 +5,17 @@ import type { DayDisplayText } from "@/lib/types";
 // single-source practice content (word bank, drills, verse), which is
 // independent of this toggle.
 //
-// TODO(content): bibleTruth and scratchProject below are reasonable
-// placeholders inferred from the theme title and the game brief ("Name
-// Animator... mirrors the Day 1 Scratch project exactly"), not pulled from
-// Aprann_Bible_Content_Pastoral_Revised_Review (Google Drive) — this
-// session has no access to that doc. Confirm both against the pastoral
-// review before camp.
+// Sourced verbatim from Aprann_Bible_Content_Pastoral_Revised_Review
+// (Google Drive, fileId 1MHnPlw8y-EZFZf3tt7Abxz3oPBktkqt_OtMLoU-zJCw,
+// last edited 2026-07-21) — the "take-home truth" and Scratch project
+// name for Day 1. See project memory for the full pastoral content
+// (themes/Scripture/Scratch projects for all 5 days) and the note that
+// this doc is still pending final pastor sign-off.
 
 const day1DisplayEn: DayDisplayText = {
   themeTitle: "Called by Name",
-  bibleTruth: "God knows your name and calls you His own.",
-  scratchProject: "Name Animator",
+  bibleTruth: "God knows my name.",
+  scratchProject: "Animate Your Name",
   badgeLabel: "Called by Name",
 };
 

@@ -24,6 +24,14 @@ const en = {
     ht: "Kreyòl",
   },
 
+  home: {
+    label: "Back to the start screen",
+    confirmTitle: "Leave this day?",
+    confirmBody: "Today isn't finished, so nothing has been saved yet. If you leave now you'll start this day over.",
+    confirmStay: "Keep typing",
+    confirmLeave: "Leave anyway",
+  },
+
   splash: {
     // Lifted from the printed workbook cover so the app opens on the same
     // sentence the children are holding in their hands.
@@ -138,6 +146,18 @@ const en = {
   games: {
     day1NameAnimator: {
       instruction: "Type your name. Each letter lands and lights up.",
+    },
+    day2CharacterBuilder: {
+      instruction: "Type each word to add that part. Every detail on purpose.",
+    },
+    day3WorldBuilder: {
+      instruction: "Type a word and watch it appear. Build your world.",
+    },
+    day4Soar: {
+      instruction: "Every word is a wingbeat. Take your time — the eagle only ever goes up.",
+    },
+    day5FindTheSheep: {
+      instruction: "Type each word to keep searching. The shepherd always finds the lost sheep.",
     },
   },
 

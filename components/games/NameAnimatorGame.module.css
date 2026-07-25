@@ -7,8 +7,11 @@
   align-items: center;
 }
 
+/* Mono, not the display face — Bungee (--font-display) is uppercase-only, so
+   a child's name rendered in it shows "TES" while they must type "Tes".
+   Same rule as components/TypingSlots.module.css. */
 .letter {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-typing), monospace;
   font-size: 3.5rem;
   color: var(--foreground-muted);
   opacity: 0.35;

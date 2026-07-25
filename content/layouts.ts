@@ -158,10 +158,19 @@ function isCharUnlocked(
  *
  * `mode: "guided"` is Theme Challenge / game behavior: not-yet-unlocked
  * characters are still typed by the child (with the finger shown) and just
- * aren't scored. Characters with NO key on this layout at all — e.g. an
- * accented Kreyòl character on US QWERTY — are always autofilled even in
- * guided mode, because there is physically no key to press; without that
- * carve-out a child whose name contains "è" would be stuck forever.
+ * aren't scored. Two kinds of character are autofilled even in guided mode,
+ * because in both cases there is no keystroke the child could reasonably be
+ * expected to produce:
+ *
+ *   1. Characters with NO key on this layout at all — e.g. an accented
+ *      Kreyòl character on US QWERTY. Without this a child whose name
+ *      contains "è" would be stuck forever.
+ *   2. Characters needing Shift before Shift has been taught (Day 4).
+ *      Guided mode shows one finger on the hand map, which cannot express a
+ *      two-key chord — so a capital on Day 1 silently asks a child to
+ *      discover Shift on their own, and the hint actively misleads them.
+ *      This is what makes a child's own capitalized name typeable on Day 1
+ *      and theme phrases typeable on Days 2-3.
  */
 export function buildLockedKeyConfig(
   text: string,
@@ -175,7 +184,8 @@ export function buildLockedKeyConfig(
   for (const char of text) {
     if (isCharUnlocked(char, unlockedChars, shiftUnlocked, layoutId)) continue;
     const hasKey = getKeyForChar(char, layoutId) !== undefined;
-    if (mode === "autofill-all" || !hasKey) autofill.add(char);
+    const needsUntaughtShift = !shiftUnlocked && requiresShift(char, layoutId);
+    if (mode === "autofill-all" || !hasKey || needsUntaughtShift) autofill.add(char);
     else guidedTyped.add(char);
   }
   return { autofill, guidedTyped };

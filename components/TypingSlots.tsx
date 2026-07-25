@@ -4,6 +4,7 @@ import type { TypingState } from "@/lib/typing-engine";
 import { getFingerForChar, DEFAULT_LAYOUT, type LayoutId } from "@/content/layouts";
 import { FINGERS, THUMB_COLOR } from "@/content/fingers";
 import { useI18n } from "@/context/I18nContext";
+import { useTypingInputFocus } from "@/context/OverlayContext";
 import styles from "./TypingSlots.module.css";
 
 type TypingSlotsProps = {
@@ -21,8 +22,14 @@ const STREAK_DISPLAY_THRESHOLD = 3;
 // timer, not a penalty, just a "still here?" nudge for a child who's stopped.
 const IDLE_MS = 6000;
 
+// A space used to render as "·", which is nearly the same mark as a period at
+// the same size in the same-width slot — the two were indistinguishable on the
+// drills that alternate them. A space now draws no glyph at all: the .space
+// slot is wide with a low bar (echoing the wide space bar), while a period is
+// a narrow slot with an oversized dot. Width and shape carry the difference
+// before anything is typed; finger color carries it after.
 function displayChar(char: string): string {
-  return char === " " ? "·" : char;
+  return char === " " ? "" : char;
 }
 
 function colorForChar(char: string, layoutId: LayoutId): string | undefined {
@@ -33,6 +40,7 @@ function colorForChar(char: string, layoutId: LayoutId): string | undefined {
 
 export function TypingSlots({ state, inputRef, onKeyDown, layoutId = DEFAULT_LAYOUT }: TypingSlotsProps) {
   const { t } = useI18n();
+  const focusProps = useTypingInputFocus(inputRef);
   const [streak, setStreak] = useState(0);
   const [idle, setIdle] = useState(false);
   const eventIdsRef = useRef({ correct: state.correctEventId, miss: state.missEventId });
@@ -82,7 +90,7 @@ export function TypingSlots({ state, inputRef, onKeyDown, layoutId = DEFAULT_LAY
           ref={inputRef}
           className={styles.hiddenInput}
           onKeyDown={onKeyDown}
-          onBlur={(e) => e.target.focus()}
+          {...focusProps}
           autoFocus
           aria-label="Typing input"
         />
@@ -98,6 +106,8 @@ export function TypingSlots({ state, inputRef, onKeyDown, layoutId = DEFAULT_LAY
               key={isCurrent ? `cur-${state.missEventId}` : i}
               className={[
                 styles.slot,
+                slot.char === " " ? styles.space : "",
+                slot.char === "." || slot.char === "," ? styles.dotPunct : "",
                 isCurrent ? styles.current : "",
                 slot.status === "correct" ? styles.correct : "",
                 slot.status === "incorrect" ? styles.incorrect : "",

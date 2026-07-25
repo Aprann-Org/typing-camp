@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTypingSession } from "@/lib/useTypingSession";
 import { buildLockedKeyConfig, getFingerForChar } from "@/content/layouts";
 import { FINGERS, THUMB_COLOR } from "@/content/fingers";
@@ -8,6 +8,7 @@ import { summarizeTypingState, type StageTypingSummary, type TypingState } from 
 import type { ErrorHandlingMode } from "@/content/levels";
 import { useI18n } from "@/context/I18nContext";
 import { useAppSettings } from "@/context/AppSettingsContext";
+import { useTypingInputFocus } from "@/context/OverlayContext";
 import { HandMap } from "@/components/HandMap";
 import styles from "./NameAnimatorGame.module.css";
 
@@ -16,6 +17,8 @@ type NameAnimatorGameProps = {
   unlockedChars: ReadonlySet<string>;
   shiftUnlocked: boolean;
   errorHandling: ErrorHandlingMode;
+  /** Reports fraction of the name typed (0-1) for the journey stepper. */
+  onProgress?: (fraction: number) => void;
   onComplete: (summary: StageTypingSummary) => void;
 };
 
@@ -30,7 +33,7 @@ function colorFor(char: string): string {
 // the Day 1 Scratch project. Guided mode, since most names need locked
 // keys: the child DOES type every letter (with the finger shown), those
 // letters just don't count toward the session score.
-export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, errorHandling, onComplete }: NameAnimatorGameProps) {
+export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, errorHandling, onProgress, onComplete }: NameAnimatorGameProps) {
   const { t } = useI18n();
   const { soundEnabled } = useAppSettings();
 
@@ -47,6 +50,12 @@ export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, erro
     onComplete: (finalState: TypingState) => onComplete(summarizeTypingState(finalState)),
   });
 
+  const focusProps = useTypingInputFocus(inputRef);
+
+  useEffect(() => {
+    if (state.slots.length > 0) onProgress?.(state.index / state.slots.length);
+  }, [state.index, state.slots.length, onProgress]);
+
   const currentChar = !state.finished ? state.slots[state.index]?.char : undefined;
   const currentFinger = currentChar !== undefined ? getFingerForChar(currentChar) : null;
 
@@ -58,7 +67,7 @@ export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, erro
           ref={inputRef}
           className={styles.hiddenInput}
           onKeyDown={handleKeyDown}
-          onBlur={(e) => e.target.focus()}
+          {...focusProps}
           autoFocus
           aria-label="Typing input"
         />

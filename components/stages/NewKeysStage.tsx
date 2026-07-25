@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { DayPracticeContent } from "@/lib/types";
-import { getDrilledKeys, type LevelConfig } from "@/content/levels";
-import { buildAlternationBursts } from "@/lib/drill-generator";
+import type { LevelConfig } from "@/content/levels";
+import { buildNewKeysQueue } from "@/lib/drill-generator";
 import { emptySummary, mergeSummaries, NO_LOCKED_KEYS, type StageTypingSummary } from "@/lib/typing-engine";
 import { useGatedStage } from "@/lib/useGatedStage";
 import { TypingItem } from "@/components/TypingItem";
@@ -14,42 +14,16 @@ type NewKeysStageProps = {
   level: LevelConfig;
   unlockedChars: ReadonlySet<string>;
   justUnlockedChars: ReadonlySet<string>;
+  /** Reports queue position (0-1) so the journey stepper can show movement through this, the longest stage of the day. */
+  onProgress?: (fraction: number) => void;
   onComplete: (summary: StageTypingSummary) => void;
 };
 
-/**
- * Builds the queue: for each drilled key, the author-written isolated
- * pattern once ("f f f f f f" from content/days), then — once at least one
- * other key is already known — level-scaled alternation bursts mixing the
- * new key with everything known so far (see lib/drill-generator.ts). This
- * is what actually varies content between levels and between attempts;
- * nothing here repeats an identical target back to back.
- */
-function buildQueue(dayContent: DayPracticeContent, level: LevelConfig): string[] {
-  const drilledKeysList = getDrilledKeys(dayContent.newKeys, level.newKeyScope);
-  const items: string[] = [];
-  const known: string[] = [];
-
-  for (const key of drilledKeysList) {
-    const authored = dayContent.drills.find((d) => d.keys.length === 1 && d.keys[0] === key);
-    if (authored) items.push(authored.pattern);
-
-    if (known.length > 0) {
-      items.push(
-        ...buildAlternationBursts(key, known, level.drillRepetitions.burstCount, level.drillRepetitions.burstLength)
-      );
-    }
-    known.push(key);
-  }
-
-  return items;
-}
-
-export function NewKeysStage({ dayContent, level, unlockedChars, justUnlockedChars, onComplete }: NewKeysStageProps) {
+export function NewKeysStage({ dayContent, level, unlockedChars, justUnlockedChars, onProgress, onComplete }: NewKeysStageProps) {
   const { t } = useI18n();
   const { attempt, retrying, submitAttempt } = useGatedStage(level.accuracyGate, onComplete);
 
-  const queue = useMemo(() => buildQueue(dayContent, level), [dayContent, level]);
+  const queue = useMemo(() => buildNewKeysQueue(dayContent, level), [dayContent, level]);
 
   const [queueIndex, setQueueIndex] = useState(0);
   const [summary, setSummary] = useState<StageTypingSummary>(emptySummary());
@@ -59,6 +33,10 @@ export function NewKeysStage({ dayContent, level, unlockedChars, justUnlockedCha
     setQueueIndex(0);
     setSummary(emptySummary());
   }, [attempt]);
+
+  useEffect(() => {
+    if (queue.length > 0) onProgress?.(queueIndex / queue.length);
+  }, [queueIndex, queue.length, onProgress]);
 
   useEffect(() => {
     if (isEmpty) onComplete(emptySummary());

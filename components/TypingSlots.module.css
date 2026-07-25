@@ -60,6 +60,35 @@
   transition: background-color 60ms ease-out, color 60ms ease-out, transform 60ms ease-out;
 }
 
+/* Space slots are as wide relative to their neighbours as the space bar is to
+   the other keys — the width alone tells a child which slot is the space,
+   before they've typed anything and regardless of glyph legibility. */
+.slot.space {
+  min-width: 2.8rem;
+}
+
+/* The low bar reads as the space bar's shape. currentColor keeps it legible
+   through every slot state: muted when untyped, dark-on-finger-color when
+   correct. */
+.slot.space::before {
+  content: "";
+  position: absolute;
+  left: 0.4rem;
+  right: 0.4rem;
+  bottom: 0.6rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.8;
+}
+
+/* A period or comma at the body size is a speck. Oversizing it makes the mark
+   itself readable and, next to a wide space slot, unmistakable. */
+.slot.dotPunct {
+  font-size: 2.3rem;
+  line-height: 1;
+}
+
 .slot.current {
   outline: 2px solid var(--foreground-muted);
   outline-offset: 1px;

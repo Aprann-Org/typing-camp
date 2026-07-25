@@ -8,11 +8,10 @@ import type { DayDisplayText } from "@/lib/types";
 // translation attempt, not placeholders, but unreviewed by a native
 // speaker. See content/i18n/ht.ts's header for the same caveat.
 //
-// IMPORTANT for the Aprann team: themeTitle and bibleTruth here should
-// ultimately match whatever wording Aprann_Bible_Content_Pastoral_Revised_
-// Review (Google Drive) uses for Day 1 — that pastor-reviewed doc is the
-// authority, not this file. The English side (day1.en.ts) is also still an
-// inferred placeholder pending that doc.
+// English side (day1.en.ts) now matches Aprann_Bible_Content_Pastoral_
+// Revised_Review (Google Drive) verbatim as of 2026-07-25 — this file's
+// Kreyòl wording has been updated to translate that exact English text,
+// but still needs a native-speaker pass.
 
 const day1DisplayHt: DayDisplayText = {
   // Echoes the Day 1 verse's own wording ("Mwen te rele ou pa non ou" —
@@ -20,14 +19,13 @@ const day1DisplayHt: DayDisplayText = {
   // text reinforce each other.
   themeTitle: "Rele pa Non Ou",
 
-  // "God knows your name and calls you His own." The second half is phrased
-  // to echo the verse's "Se pa M ou ye!" (You are mine).
-  bibleTruth: "Bondye konnen non ou, epi li di se pa l ou ye.",
+  // "God knows my name." (verbatim take-home truth from the pastoral doc)
+  bibleTruth: "Bondye konnen non mwen.",
 
   // REVIEW: Scratch project names may well be left in English in the camp
-  // workbook — if so, revert this to "Name Animator" so the app and the
-  // workbook match what a child sees on screen in Scratch itself.
-  scratchProject: "Animatè Non",
+  // workbook — if so, revert this to "Name Animator"/English so the app and
+  // the workbook match what a child sees on screen in Scratch itself.
+  scratchProject: "Anime Non Ou",
 
   badgeLabel: "Rele pa Non Ou",
 };

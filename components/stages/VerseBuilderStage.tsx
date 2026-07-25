@@ -9,6 +9,7 @@ import { useTypingSession } from "@/lib/useTypingSession";
 import { summarizeTypingState, type StageTypingSummary, type TypingState } from "@/lib/typing-engine";
 import { useI18n } from "@/context/I18nContext";
 import { useAppSettings } from "@/context/AppSettingsContext";
+import { useTypingInputFocus } from "@/context/OverlayContext";
 import styles from "./VerseBuilderStage.module.css";
 
 type PriorProgress = { day: number; charsTypedUnassisted: number } | null;
@@ -19,6 +20,8 @@ type VerseBuilderStageProps = {
   unlockedChars: ReadonlySet<string>;
   shiftUnlocked: boolean;
   priorProgress: PriorProgress;
+  /** Reports fraction of the verse typed (0-1) for the journey stepper. */
+  onProgress?: (fraction: number) => void;
   onComplete: (summary: StageTypingSummary, verseCharsTypedUnassisted: number) => void;
 };
 
@@ -41,6 +44,7 @@ export function VerseBuilderStage({
   unlockedChars,
   shiftUnlocked,
   priorProgress,
+  onProgress,
   onComplete,
 }: VerseBuilderStageProps) {
   const { t } = useI18n();
@@ -81,6 +85,8 @@ export function VerseBuilderStage({
     },
   });
 
+  const focusProps = useTypingInputFocus(inputRef);
+
   useEffect(() => {
     return () => {
       timersRef.current.forEach(clearTimeout);
@@ -88,6 +94,10 @@ export function VerseBuilderStage({
   }, []);
 
   const typedSoFar = state.correctCount + state.incorrectCount;
+
+  useEffect(() => {
+    if (totalUnassisted > 0) onProgress?.(typedSoFar / totalUnassisted);
+  }, [typedSoFar, totalUnassisted, onProgress]);
 
   return (
     <div className={styles.wrap}>
@@ -100,7 +110,7 @@ export function VerseBuilderStage({
           ref={inputRef}
           className={styles.hiddenInput}
           onKeyDown={handleKeyDown}
-          onBlur={(e) => e.target.focus()}
+          {...focusProps}
           autoFocus
           aria-label="Typing input"
         />

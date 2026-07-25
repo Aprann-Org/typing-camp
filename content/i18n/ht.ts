@@ -43,6 +43,16 @@ const ht: Strings = {
     ht: "Kreyòl",
   },
 
+  home: {
+    label: "Tounen nan ekran kòmansman",
+    confirmTitle: "Kite jou sa a?",
+    // REVIEW: "poko sove" = "not yet saved". Second sentence says plainly
+    // that they would have to start the day again, which is what happens.
+    confirmBody: "Jou a poko fini, donk anyen poko sove. Si w kite kounye a, w ap rekòmanse jou sa a.",
+    confirmStay: "Kontinye tape",
+    confirmLeave: "Kite kanmenm",
+  },
+
   splash: {
     // Not a translation — this is the exact line already printed on the
     // workbook cover, copied verbatim. If the cover ever changes, change
@@ -184,6 +194,21 @@ const ht: Strings = {
   games: {
     day1NameAnimator: {
       instruction: "Tape non ou. Chak lèt ap tonbe epi limen.",
+    },
+    day2CharacterBuilder: {
+      instruction: "Tape chak mo pou ajoute pati sa a. Chak detay gen yon rezon.",
+    },
+    day3WorldBuilder: {
+      instruction: "Tape yon mo epi gade l parèt. Bati mond pa ou.",
+    },
+    // REVIEW: "kout zèl" = wingbeat. The second sentence is deliberately
+    // reassuring — the eagle never falls, and a slower child should not read
+    // this as a race (see the comment in components/games/SoarGame.tsx).
+    day4Soar: {
+      instruction: "Chak mo se yon kout zèl. Pran tan ou — malfini an toujou ap monte.",
+    },
+    day5FindTheSheep: {
+      instruction: "Tape chak mo pou kontinye chache. Gadò a toujou jwenn mouton ki pèdi a.",
     },
   },
 

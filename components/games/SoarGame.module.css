@@ -1,0 +1,15 @@
+/* The eagle's climb. Transform-only (compositor-friendly) and transitioned
+   rather than looped, so there is no continuous animation to fight and
+   reduced-motion just turns the easing off — the bird still ends up in the
+   right place, it simply arrives instantly. */
+
+.bird {
+  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bird {
+    transition: none;
+  }
+}

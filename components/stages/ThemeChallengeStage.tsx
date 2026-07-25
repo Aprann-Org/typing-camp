@@ -14,10 +14,12 @@ type ThemeChallengeStageProps = {
   level: LevelConfig;
   unlockedChars: ReadonlySet<string>;
   shiftUnlocked: boolean;
+  /** Reports target-queue position (0-1) for the journey stepper. */
+  onProgress?: (fraction: number) => void;
   onComplete: (summary: StageTypingSummary) => void;
 };
 
-export function ThemeChallengeStage({ targets, level, unlockedChars, shiftUnlocked, onComplete }: ThemeChallengeStageProps) {
+export function ThemeChallengeStage({ targets, level, unlockedChars, shiftUnlocked, onProgress, onComplete }: ThemeChallengeStageProps) {
   const { t } = useI18n();
   const { attempt, retrying, submitAttempt } = useGatedStage(level.accuracyGate, onComplete);
   const [index, setIndex] = useState(0);
@@ -38,6 +40,10 @@ export function ThemeChallengeStage({ targets, level, unlockedChars, shiftUnlock
     setIndex(0);
     setSummary(emptySummary());
   }, [attempt]);
+
+  useEffect(() => {
+    if (targets.length > 0) onProgress?.(index / targets.length);
+  }, [index, targets.length, onProgress]);
 
   // Nothing to type for this day/level — complete from an effect rather than
   // during render (calling a parent's setState mid-render is not allowed).

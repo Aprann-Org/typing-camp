@@ -7,7 +7,6 @@ import { getAvailableDays } from "@/content/days";
 import { getAllProfiles, findProfileByName, createProfile, getLastCompletedDay } from "@/lib/storage";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useI18n } from "@/context/I18nContext";
-import { BrandMark } from "@/components/BrandMark";
 import { Mascot } from "@/components/Mascot";
 import { DayPath } from "@/components/DayPath";
 import { LevelIcon } from "@/components/LevelIcon";
@@ -224,9 +223,8 @@ function ScreenShell({
           it, so it can't cost contrast on the classroom panels. */}
       <div className={styles.horizon} aria-hidden="true" />
 
-      <div className="absolute left-4 top-4 z-10">
-        <BrandMark size={32} />
-      </div>
+      {/* The brand mark that used to sit in the left corner here now lives in
+          app/page.tsx, so it holds the same corner on every screen. */}
 
       <div className="absolute right-4 top-4 z-10 flex gap-1 rounded-full border border-border-subtle bg-background/70 p-1">
         <button

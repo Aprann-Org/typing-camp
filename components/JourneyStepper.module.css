@@ -1,15 +1,15 @@
+/* A fixed overall width, because the segments are sized proportionally to how
+   much typing each stage holds (see lib/session-progress.ts) — that needs a
+   total to divide up. */
 .row {
   display: flex;
   align-items: center;
   gap: 0;
-}
-
-.segment {
-  display: flex;
-  align-items: center;
+  width: min(34rem, 86vw);
 }
 
 .dot {
+  flex: none;
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 50%;
@@ -30,15 +30,25 @@
   animation: pulse 1.4s ease-in-out infinite;
 }
 
+/* flex-basis 0 so flex-grow alone decides the length; min-width keeps even the
+   shortest stage's segment long enough to read as a path. */
 .line {
-  width: 1.5rem;
+  position: relative;
+  flex: 0 1 0;
+  min-width: 0.9rem;
   height: 2px;
   background: var(--border-subtle);
-  transition: background-color 200ms ease-out;
+  overflow: hidden;
 }
 
-.line.lineDone {
+/* Grows across the current segment as the child works through the stage. The
+   transition is what makes it read as travelling rather than jumping. */
+.lineFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
   background: var(--accent-action);
+  transition: width 300ms ease-out;
 }
 
 .flag {

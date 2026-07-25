@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import styles from "./JourneyStepper.module.css";
 
 type JourneyStepperProps = {
@@ -6,12 +7,26 @@ type JourneyStepperProps = {
   /** STAGE_ORDER.length, i.e. including the report stage as the finish flag. */
   total: number;
   label: string;
+  /**
+   * Relative length of each segment, one per dot, from
+   * lib/session-progress.ts. Equal-length segments if omitted.
+   */
+  shares?: number[];
+  /**
+   * How far through the current stage the child is, 0-1. Partially fills the
+   * current segment, so the long stages visibly move instead of sitting still
+   * for minutes at a time.
+   */
+  fraction?: number;
 };
 
 // Replaces a flat progress bar with the day's route: a dot per practice
 // stage, a line connecting them, and a flag at the end standing in for the
 // report stage — the thing a child is walking toward, not a percentage.
-export function JourneyStepper({ current, total, label }: JourneyStepperProps) {
+//
+// Segment i is the walk from dot i to the next dot, i.e. the work of stage i:
+// it's full once that stage is done, and partially filled while it's underway.
+export function JourneyStepper({ current, total, label, shares, fraction = 0 }: JourneyStepperProps) {
   const dotCount = total - 1;
 
   return (
@@ -21,13 +36,14 @@ export function JourneyStepper({ current, total, label }: JourneyStepperProps) {
         const done = stepNum < current;
         const isCurrent = stepNum === current;
         return (
-          <div className={styles.segment} key={i}>
+          <Fragment key={i}>
             <span className={[styles.dot, done ? styles.done : "", isCurrent ? styles.currentDot : ""].filter(Boolean).join(" ")} />
-            {i < dotCount - 1 && <span className={[styles.line, done ? styles.lineDone : ""].filter(Boolean).join(" ")} />}
-          </div>
+            <span className={styles.line} style={{ flexGrow: shares?.[i] ?? 1 }}>
+              <span className={styles.lineFill} style={{ width: `${(done ? 1 : isCurrent ? fraction : 0) * 100}%` }} />
+            </span>
+          </Fragment>
         );
       })}
-      <span className={[styles.line, current > dotCount ? styles.lineDone : ""].filter(Boolean).join(" ")} />
       <FlagIcon className={[styles.flag, current >= total ? styles.flagReached : ""].filter(Boolean).join(" ")} />
     </div>
   );

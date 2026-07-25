@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DayNumber, Profile, Session } from "@/lib/types";
 import { LEVELS, getDrilledKeys, type LevelId } from "@/content/levels";
 import { getDayDisplayText, getDayPracticeContent, getCumulativeUnlockedKeys, isShiftUnlocked } from "@/content/days";
 import { STAGE_ORDER } from "@/lib/session";
+import { stageSegmentShares } from "@/lib/session-progress";
 import { emptySummary, mergeSummaries, computeKeyMastery, type StageTypingSummary } from "@/lib/typing-engine";
 import { calculateWpm } from "@/lib/wpm";
 import { addSession, getPriorVerseProgress, getStreak } from "@/lib/storage";
@@ -23,18 +24,23 @@ type SessionRunnerProps = {
   profile: Profile;
   day: DayNumber;
   level: LevelId;
+  /** Fired once this session is written to storage — after which leaving costs nothing. */
+  onProgressSaved: () => void;
   onSessionEnd: () => void;
 };
 
 const REPORT_STAGE_INDEX = STAGE_ORDER.length - 1;
 
-export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunnerProps) {
+export function SessionRunner({ profile, day, level, onProgressSaved, onSessionEnd }: SessionRunnerProps) {
   const { t } = useI18n();
   const dayContent = getDayPracticeContent(day);
   const displayText = getDayDisplayText(profile.language, day);
   const levelConfig = LEVELS[level];
 
   const [stageIndex, setStageIndex] = useState(0);
+  // 0-1 progress inside the current stage, reported upward by the stages that
+  // work through a queue. Feeds the stepper's partial segment fill.
+  const [stageFraction, setStageFraction] = useState(0);
   const [summary, setSummary] = useState<StageTypingSummary>(emptySummary());
   const [verseCharsTypedUnassisted, setVerseCharsTypedUnassisted] = useState(0);
   const [finalStats, setFinalStats] = useState<{ wpm: number; accuracy: number; streak: number } | null>(null);
@@ -65,6 +71,21 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
   }, [dayContent, profile.firstName]);
 
   const priorVerseProgress = useMemo(() => getPriorVerseProgress(profile, day), [profile, day]);
+
+  // Segment lengths for the stepper, sized by how much typing each stage
+  // actually holds — New Keys is most of the day, and the bar now says so.
+  const segmentShares = useMemo(() => {
+    if (!dayContent) return undefined;
+    return stageSegmentShares({ dayContent, level: levelConfig, themeTargets, unlockedChars, shiftUnlocked });
+  }, [dayContent, levelConfig, themeTargets, unlockedChars, shiftUnlocked]);
+
+  // Stages report on every item (and every keystroke, in Verse Builder), so
+  // ignore changes too small to be visible — an identical value lets React
+  // skip the re-render of the whole session tree entirely.
+  const reportStageProgress = useCallback((fraction: number) => {
+    const next = Math.min(1, Math.max(0, fraction));
+    setStageFraction((prev) => (Math.abs(prev - next) < 0.01 ? prev : next));
+  }, []);
 
   const stage = STAGE_ORDER[stageIndex];
 
@@ -97,6 +118,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
     const updatedProfile = addSession(profile.id, session);
     setFinalStats({ wpm, accuracy, streak: updatedProfile ? getStreak(updatedProfile) : 0 });
     if (updatedProfile) setProfileForReport(updatedProfile);
+    onProgressSaved();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
 
@@ -112,6 +134,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
   }
 
   function goToNextStage() {
+    setStageFraction(0);
     setStageIndex((i) => Math.min(i + 1, STAGE_ORDER.length - 1));
   }
 
@@ -127,6 +150,8 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
           <JourneyStepper
             current={stageIndex + 1}
             total={STAGE_ORDER.length}
+            shares={segmentShares}
+            fraction={stageFraction}
             label={t("progress.stageOf", { current: stageIndex + 1, total: STAGE_ORDER.length })}
           />
         </div>
@@ -140,6 +165,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
           level={levelConfig}
           unlockedChars={unlockedChars}
           justUnlockedChars={new Set(dayContent.newKeys)}
+          onProgress={reportStageProgress}
           onComplete={handleStageComplete}
         />
       )}
@@ -150,6 +176,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
           level={levelConfig}
           unlockedChars={unlockedChars}
           guidedOnlyKeys={guidedOnlyKeys}
+          onProgress={reportStageProgress}
           onComplete={handleStageComplete}
         />
       )}
@@ -160,6 +187,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
           level={levelConfig}
           unlockedChars={unlockedChars}
           shiftUnlocked={shiftUnlocked}
+          onProgress={reportStageProgress}
           onComplete={handleStageComplete}
         />
       )}
@@ -171,6 +199,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
           unlockedChars={unlockedChars}
           shiftUnlocked={shiftUnlocked}
           firstName={profile.firstName}
+          onProgress={reportStageProgress}
           onComplete={handleStageComplete}
         />
       )}
@@ -182,6 +211,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
           unlockedChars={unlockedChars}
           shiftUnlocked={shiftUnlocked}
           priorProgress={priorVerseProgress}
+          onProgress={reportStageProgress}
           onComplete={(stageSummary, verseChars) => {
             setVerseCharsTypedUnassisted(verseChars);
             addToSummary(stageSummary);

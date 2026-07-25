@@ -4,6 +4,7 @@ import "./globals.css";
 import { SwRegister } from "./sw-register";
 import { AppSettingsProvider } from "@/context/AppSettingsContext";
 import { I18nProvider } from "@/context/I18nContext";
+import { OverlayProvider } from "@/context/OverlayContext";
 
 const displayFont = Bungee({
   variable: "--font-display",
@@ -38,7 +39,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AppSettingsProvider>
-          <I18nProvider>{children}</I18nProvider>
+          <I18nProvider>
+            <OverlayProvider>{children}</OverlayProvider>
+          </I18nProvider>
         </AppSettingsProvider>
         <SwRegister />
       </body>

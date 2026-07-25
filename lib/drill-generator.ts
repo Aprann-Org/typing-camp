@@ -9,6 +9,9 @@
 // back" complaint — burst 2 always continues where burst 1 left off, so
 // no two bursts in a sequence are ever the same string.
 
+import type { DayPracticeContent } from "./types";
+import { getDrilledKeys, type LevelConfig } from "@/content/levels";
+
 function burstFrom(pool: string[], start: number, length: number): string {
   const chars: string[] = [];
   for (let i = 0; i < length; i++) chars.push(pool[(start + i) % pool.length]);
@@ -42,4 +45,37 @@ export function buildAlternationBursts(
     start += burstLength;
   }
   return bursts;
+}
+
+/**
+ * The full New Keys queue: for each drilled key, the author-written isolated
+ * pattern once ("f f f f f f" from content/days), then — once at least one
+ * other key is already known — level-scaled alternation bursts mixing the new
+ * key with everything known so far. This is what actually varies content
+ * between levels and between attempts; nothing here repeats an identical
+ * target back to back.
+ *
+ * Lives here rather than in NewKeysStage because the journey stepper needs to
+ * know how long this stage is BEFORE the child enters it — it is by far the
+ * longest stage of the day, and sizing its segment honestly is the whole
+ * point (see lib/session-progress.ts).
+ */
+export function buildNewKeysQueue(dayContent: DayPracticeContent, level: LevelConfig): string[] {
+  const drilledKeysList = getDrilledKeys(dayContent.newKeys, level.newKeyScope);
+  const items: string[] = [];
+  const known: string[] = [];
+
+  for (const key of drilledKeysList) {
+    const authored = dayContent.drills.find((d) => d.keys.length === 1 && d.keys[0] === key);
+    if (authored) items.push(authored.pattern);
+
+    if (known.length > 0) {
+      items.push(
+        ...buildAlternationBursts(key, known, level.drillRepetitions.burstCount, level.drillRepetitions.burstLength)
+      );
+    }
+    known.push(key);
+  }
+
+  return items;
 }

@@ -1,0 +1,41 @@
+/* The shepherd's search. Transform-only movement, and the sheep's reveal is
+   the one flourish in the scene — it is the last beat of the whole week, so
+   it gets a small celebratory bounce rather than a plain fade. */
+
+.shepherd {
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.spot {
+  transition: fill 300ms ease-out, opacity 300ms ease-out;
+}
+
+.sheep {
+  opacity: 0;
+  transform: scale(0.7);
+  transform-origin: center;
+  transition: opacity 300ms ease-out;
+}
+
+.sheepFound {
+  opacity: 1;
+  animation: foundBounce 700ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes foundBounce {
+  0% { transform: scale(0.7) translateY(0); }
+  45% { transform: scale(1.12) translateY(-10px); }
+  70% { transform: scale(0.98) translateY(2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shepherd {
+    transition: none;
+  }
+  .sheepFound {
+    animation: none;
+    transform: scale(1);
+  }
+}
