@@ -58,7 +58,9 @@ export function ReportStage({ badgeLabel, level, summary, wpm, accuracy, streak,
 
       <div className="flex flex-col items-center gap-1 font-[family-name:var(--font-ui)]">
         <p className="text-sm text-foreground-muted">{t("stages.report.badgeLabel")}</p>
-        <p className="text-lg font-semibold text-[var(--finger-left-index)]">{badgeLabel}</p>
+        {/* Gold, not a finger color — this is the one screen where "earned"
+            is the meaning being carried, and no finger colors are on it. */}
+        <p className="text-lg font-semibold text-[var(--accent-celebrate)]">{badgeLabel}</p>
       </div>
 
       <div className="flex flex-col items-center gap-1 font-[family-name:var(--font-ui)]">
@@ -66,10 +68,7 @@ export function ReportStage({ badgeLabel, level, summary, wpm, accuracy, streak,
         <p className="text-lg font-semibold text-foreground">{streak}</p>
       </div>
 
-      <button
-        className="mt-2 rounded-full bg-[var(--finger-left-index)] px-8 py-3 font-[family-name:var(--font-ui)] text-lg font-semibold text-[#14162a]"
-        onClick={onDone}
-      >
+      <button className="btn-primary mt-2 px-8 py-3 text-lg" onClick={onDone}>
         {t("stages.report.doneButton")}
       </button>
     </div>

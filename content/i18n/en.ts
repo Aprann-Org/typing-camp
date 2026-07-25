@@ -24,6 +24,13 @@ const en = {
     ht: "Kreyòl",
   },
 
+  splash: {
+    // Lifted from the printed workbook cover so the app opens on the same
+    // sentence the children are holding in their hands.
+    tagline: "Five days of code, creation, and the God who made you",
+    skipHint: "Press any key",
+  },
+
   startScreen: {
     title: "Kod & Kreyasyon",
     subtitle: "Type your first name to begin.",

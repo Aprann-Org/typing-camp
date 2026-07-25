@@ -43,6 +43,15 @@ const ht: Strings = {
     ht: "Kreyòl",
   },
 
+  splash: {
+    // Not a translation — this is the exact line already printed on the
+    // workbook cover, copied verbatim. If the cover ever changes, change
+    // this with it.
+    tagline: "Senk jou kodaj, kreyasyon, ak Bondye ki fè w la",
+    // "touch" = a key on the keyboard, per this file's vocabulary note.
+    skipHint: "Peze nenpòt touch",
+  },
+
   startScreen: {
     title: "Kod ak Kreyasyon",
     subtitle: "Tape prenon ou pou kòmanse.",

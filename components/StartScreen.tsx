@@ -7,6 +7,8 @@ import { getAvailableDays } from "@/content/days";
 import { getAllProfiles, findProfileByName, createProfile, getLastCompletedDay } from "@/lib/storage";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useI18n } from "@/context/I18nContext";
+import { BrandMark } from "@/components/BrandMark";
+import styles from "./StartScreen.module.css";
 
 type Step = "enterName" | "confirm" | "pickSession";
 
@@ -78,16 +80,10 @@ export function StartScreen({ onStart }: StartScreenProps) {
             {lastDay ? t("startScreen.isThisYouLastDay", { day: lastDay }) : t("startScreen.isThisYouNoProgress")}
           </p>
           <div className="flex gap-3">
-            <button
-              className="rounded-full bg-[var(--finger-left-index)] px-6 py-2 font-[family-name:var(--font-ui)] font-semibold text-[#14162a]"
-              onClick={handleConfirmYes}
-            >
+            <button className="btn-primary px-6 py-2" onClick={handleConfirmYes}>
               {t("startScreen.isThisYouConfirm")}
             </button>
-            <button
-              className="rounded-full border border-border-subtle px-6 py-2 font-[family-name:var(--font-ui)] text-foreground"
-              onClick={handleConfirmNo}
-            >
+            <button className="btn-secondary px-6 py-2" onClick={handleConfirmNo}>
               {t("startScreen.isThisYouDeny")}
             </button>
           </div>
@@ -111,9 +107,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
                 <button
                   key={day}
                   className={`rounded-full px-4 py-2 font-[family-name:var(--font-ui)] transition-colors ${
-                    selectedDay === day
-                      ? "bg-[var(--finger-left-index)] text-[#14162a]"
-                      : "border border-border-subtle text-foreground"
+                    selectedDay === day ? "chip-selected" : "btn-secondary"
                   }`}
                   onClick={() => setSelectedDay(day)}
                 >
@@ -130,9 +124,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
                 <button
                   key={levelId}
                   className={`flex flex-col items-center rounded-2xl px-4 py-3 font-[family-name:var(--font-ui)] transition-colors ${
-                    selectedLevel === levelId
-                      ? "bg-[var(--finger-right-middle)] text-[#14162a]"
-                      : "border border-border-subtle text-foreground"
+                    selectedLevel === levelId ? "chip-selected !rounded-2xl" : "btn-secondary !rounded-2xl"
                   }`}
                   onClick={() => setSelectedLevel(levelId)}
                 >
@@ -144,7 +136,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
           </div>
 
           <button
-            className="w-full rounded-full bg-[var(--finger-left-index)] px-6 py-3 font-[family-name:var(--font-ui)] text-lg font-semibold text-[#14162a]"
+            className="btn-primary w-full px-6 py-3 text-lg"
             onClick={() => onStart(resolvedProfile, selectedDay, selectedLevel)}
           >
             {t("startScreen.startButton")}
@@ -178,10 +170,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
             autoFocus
           />
           {error && <p className="font-[family-name:var(--font-ui)] text-sm text-[var(--finger-right-middle)]">{error}</p>}
-          <button
-            className="mt-2 w-full rounded-full bg-[var(--finger-left-index)] px-6 py-3 font-[family-name:var(--font-ui)] text-lg font-semibold text-[#14162a]"
-            onClick={handleSubmitName}
-          >
+          <button className="btn-primary mt-2 w-full px-6 py-3 text-lg" onClick={handleSubmitName}>
             {t("startScreen.startButton")}
           </button>
         </div>
@@ -197,7 +186,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
                 return (
                   <button
                     key={profile.id}
-                    className="flex items-center gap-2 rounded-full border border-border-subtle px-4 py-2 font-[family-name:var(--font-ui)] text-foreground"
+                    className="btn-secondary flex items-center gap-2 px-4 py-2"
                     onClick={() => selectProfile(profile)}
                   >
                     <span>{profile.firstName}</span>
@@ -225,11 +214,20 @@ function ScreenShell({
   t: (path: string) => string;
 }) {
   return (
-    <div className="relative flex flex-1 flex-col items-center justify-center gap-10 p-6">
-      <div className="absolute right-4 top-4 flex gap-1 rounded-full border border-border-subtle p-1">
+    <div className="relative flex flex-1 flex-col items-center justify-center gap-10 overflow-hidden p-6">
+      {/* Cover art as a horizon band along the bottom, faded out well before
+          it reaches the content. Atmosphere only — nothing readable sits on
+          it, so it can't cost contrast on the classroom panels. */}
+      <div className={styles.horizon} aria-hidden="true" />
+
+      <div className="absolute left-4 top-4 z-10">
+        <BrandMark size={32} />
+      </div>
+
+      <div className="absolute right-4 top-4 z-10 flex gap-1 rounded-full border border-border-subtle bg-background/70 p-1">
         <button
           className={`rounded-full px-3 py-1 text-sm font-[family-name:var(--font-ui)] ${
-            language === "en" ? "bg-[var(--finger-left-index)] text-[#14162a]" : "text-foreground-muted"
+            language === "en" ? "chip-selected" : "text-foreground-muted"
           }`}
           onClick={() => setLanguage("en")}
         >
@@ -237,14 +235,15 @@ function ScreenShell({
         </button>
         <button
           className={`rounded-full px-3 py-1 text-sm font-[family-name:var(--font-ui)] ${
-            language === "ht" ? "bg-[var(--finger-left-index)] text-[#14162a]" : "text-foreground-muted"
+            language === "ht" ? "chip-selected" : "text-foreground-muted"
           }`}
           onClick={() => setLanguage("ht")}
         >
           {t("languageToggle.ht")}
         </button>
       </div>
-      {children}
+
+      <div className="relative z-10 flex w-full flex-col items-center gap-10">{children}</div>
     </div>
   );
 }

@@ -30,10 +30,7 @@ export function ReadyStage({ onContinue }: ReadyStageProps) {
         <p className="text-foreground-muted">{t("stages.ready.restOfFingers")}</p>
         <p className="text-foreground-muted">{t("stages.ready.posture")}</p>
       </div>
-      <button
-        className="rounded-full bg-[var(--finger-left-index)] px-8 py-3 font-[family-name:var(--font-ui)] text-lg font-semibold text-[#14162a]"
-        onClick={onContinue}
-      >
+      <button className="btn-primary px-8 py-3 text-lg" onClick={onContinue}>
         {t("stages.ready.continueButton")}
       </button>
     </div>

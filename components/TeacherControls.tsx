@@ -12,7 +12,7 @@ type TeacherControlsProps = {
 // something a child would notice or mash. Opens a small panel on tap.
 export function TeacherControls({ onSkipStage }: TeacherControlsProps) {
   const { t } = useI18n();
-  const { calmMode, setCalmMode } = useAppSettings();
+  const { calmMode, setCalmMode, soundEnabled, setSoundEnabled } = useAppSettings();
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,6 +32,15 @@ export function TeacherControls({ onSkipStage }: TeacherControlsProps) {
             onClick={() => setCalmMode(!calmMode)}
           >
             {calmMode ? t("teacherControls.calmModeOff") : t("teacherControls.calmModeOn")}
+          </button>
+          {/* Sound ships off (lib/storage.ts createProfile) and this is the
+              only place it can be turned on — without it lib/sound.ts is
+              unreachable and every session runs silent. */}
+          <button
+            className="text-left font-[family-name:var(--font-ui)] text-xs text-foreground-muted hover:text-foreground"
+            onClick={() => setSoundEnabled(!soundEnabled)}
+          >
+            {soundEnabled ? t("sound.toggleOff") : t("sound.toggleOn")}
           </button>
         </div>
       )}

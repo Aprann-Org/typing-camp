@@ -1,0 +1,99 @@
+.wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  background-image: url("/brand/splash-cover.webp");
+  background-size: cover;
+  background-position: center 42%;
+  /* A slow push-in. Starts already at 1.06 so a calm-mode collapse to the
+     end state (scale 1) is a still frame of the same composition, not a
+     jump. */
+  animation: pushIn 6s ease-out both;
+}
+
+/* An inverted vignette: darkest at the centre, lifting through a ring at
+   ~45%. That is backwards from the usual, and deliberate — this particular
+   illustration puts its busiest, brightest region (the laptop screen full of
+   Scratch blocks) dead centre, exactly where the title lands, and puts the
+   children's faces around the outside. Darkening the middle buys legibility
+   from the one area nobody needs to see, and spends it on the faces. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(10, 34, 49, 0.88) 0%, rgba(10, 34, 49, 0.7) 45%, rgba(10, 34, 49, 0.82) 100%),
+    linear-gradient(to bottom, rgba(10, 34, 49, 0.35), rgba(10, 34, 49, 0.55));
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  animation: riseIn 700ms ease-out 80ms both;
+}
+
+.title {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  line-height: 1.1;
+  color: var(--foreground);
+  /* A tight dark halo rather than a drop shadow — it tracks the letterforms
+     wherever the art behind them happens to be bright. */
+  text-shadow: 0 2px 14px rgba(6, 22, 33, 0.85), 0 0 3px rgba(6, 22, 33, 0.7);
+  animation: riseIn 700ms ease-out 260ms both;
+}
+
+.tagline {
+  max-width: 32rem;
+  font-family: var(--font-ui), sans-serif;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  color: var(--brand-pale);
+  text-shadow: 0 1px 10px rgba(6, 22, 33, 0.9);
+  animation: riseIn 700ms ease-out 420ms both;
+}
+
+.hint {
+  margin-top: 1.25rem;
+  font-family: var(--font-ui), sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--foreground-muted);
+  text-shadow: 0 1px 10px rgba(6, 22, 33, 0.9);
+  animation: riseIn 700ms ease-out 900ms both, breathe 2.4s ease-in-out 1.6s infinite;
+}
+
+@keyframes pushIn {
+  from { transform: scale(1.06); }
+  to { transform: scale(1); }
+}
+
+/* fill-mode `both` on every use above, so when calm mode or
+   prefers-reduced-motion collapses the duration to ~0 the element lands on
+   the `to` frame (fully visible, untranslated) rather than vanishing. */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}

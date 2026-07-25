@@ -1,14 +1,36 @@
 @import "tailwindcss";
 
 :root {
+  /* Aprann brand, sampled from the logo artwork in assets/brand-source/.
+     These are the organization's colors — do not drift them. */
+  --brand-navy: #0c3d54;
+  --brand-slate: #5d7b92;
+  --brand-pale: #a2bbc1;
+  --brand-gold: #916e2b;
+
   /* Deep, near-saturated dark background — quiet enough for the eight
      finger colors to carry all the visual weight, and dark enough to
-     survive fluorescent classroom light on a low-contrast 1366x768 panel. */
-  --background: #0d0e1a;
-  --background-raised: #14162a;
+     survive fluorescent classroom light on a low-contrast 1366x768 panel.
+     Sits one step darker than --brand-navy so the navy raised surfaces
+     (and the navy half of the Aprann house mark) still read against it. */
+  --background: #0a2231;
+  --background-raised: var(--brand-navy);
   --foreground: #f2eee6;
-  --foreground-muted: #a6a3ad;
-  --border-subtle: #2a2c40;
+  --foreground-muted: #9fb4c0;
+  --border-subtle: #1e4a63;
+
+  /* Chrome vs. reward. Every one of the eight finger hues is load-bearing
+     teaching signal ("yellow means left index finger"), so UI chrome must
+     not borrow any of them — a child who sees yellow on every button stops
+     reading yellow as a finger. Buttons, focus rings and progress are
+     achromatic cream; gold means something was *earned* and appears only
+     on badges and celebration moments, where no finger color is on screen.
+     Cream is also the only shade left that isn't a finger color: the eight
+     hues already span the full hue circle. */
+  --accent-action: #f2eee6;
+  --accent-action-text: #0a2231;
+  --accent-celebrate: #e0a62e;
+  --focus-ring: #f2eee6;
 
   /* Finger colors — canonical values live in content/fingers.ts; kept in
      sync here as CSS vars for use in plain CSS (module stylesheets) where
@@ -31,6 +53,10 @@
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
   --color-border-subtle: var(--border-subtle);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-slate: var(--brand-slate);
+  --color-brand-pale: var(--brand-pale);
+  --color-accent-celebrate: var(--accent-celebrate);
 
   --font-display: var(--font-display);
   --font-ui: var(--font-ui);
@@ -41,6 +67,48 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* The three button shapes the app actually uses. Centralized so the
+   chrome-vs-finger-color rule above can never be violated one component at
+   a time — reach for these rather than writing a bg-[var(--finger-*)]. */
+@layer components {
+  .btn-primary {
+    border-radius: 9999px;
+    background: var(--accent-action);
+    color: var(--accent-action-text);
+    font-family: var(--font-ui), sans-serif;
+    font-weight: 600;
+    transition: transform 80ms ease-out, filter 120ms ease-out;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.06);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+
+  .btn-secondary {
+    border-radius: 9999px;
+    border: 1px solid var(--border-subtle);
+    color: var(--foreground);
+    font-family: var(--font-ui), sans-serif;
+    transition: border-color 120ms ease-out, background-color 120ms ease-out;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--brand-slate);
+    background: color-mix(in srgb, var(--brand-slate) 14%, transparent);
+  }
+
+  /* Selected state for the day / level choosers on the start screen. */
+  .chip-selected {
+    background: var(--accent-action);
+    color: var(--accent-action-text);
+    font-weight: 600;
+  }
 }
 
 /* Calm mode (teacher toggle) and prefers-reduced-motion both collapse to
@@ -66,6 +134,6 @@ body {
 /* Visible keyboard focus everywhere — this is a typing app operated
    entirely without a mouse; focus must never be invisible. */
 :focus-visible {
-  outline: 3px solid var(--finger-left-index);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }

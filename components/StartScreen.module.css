@@ -1,0 +1,17 @@
+/* The cover illustration as a bottom horizon band. Masked to nothing by
+   about 45% up, so the form controls above it always sit on flat
+   --background and keep their full contrast. Purely atmospheric: if the
+   image fails to load the screen is unchanged apart from being plainer. */
+.horizon {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 58%;
+  background-image: url("/brand/splash-cover.webp");
+  background-size: cover;
+  background-position: center 60%;
+  opacity: 0.28;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.55) 35%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.55) 35%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
