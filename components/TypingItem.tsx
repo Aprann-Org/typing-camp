@@ -71,6 +71,8 @@ export function TypingItem({
           justUnlockedChars={justUnlockedChars}
           helperChars={locked.guidedTyped}
           layoutId={layoutId}
+          missChar={state.lastMiss}
+          missEventId={state.missEventId}
         />
       )}
     </div>

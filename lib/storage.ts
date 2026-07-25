@@ -120,6 +120,25 @@ export function getPriorVerseProgress(profile: Profile, day: DayNumber): { day: 
   return { day: mostRecent.day, charsTypedUnassisted: mostRecent.verseCharsTypedUnassisted };
 }
 
+/**
+ * One badge per day this profile has earned, most recent completion per day
+ * if a day was ever replayed. Ordered by day, for the report stage's badge
+ * shelf.
+ */
+export function getEarnedBadges(profile: Profile): { day: DayNumber; badgeId: string }[] {
+  const byDay = new Map<DayNumber, { badgeId: string; completedAt: string }>();
+  for (const session of profile.sessions) {
+    if (session.completedAt === null || session.badgeEarned === null) continue;
+    const existing = byDay.get(session.day);
+    if (!existing || session.completedAt > existing.completedAt) {
+      byDay.set(session.day, { badgeId: session.badgeEarned, completedAt: session.completedAt });
+    }
+  }
+  return Array.from(byDay.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([day, v]) => ({ day, badgeId: v.badgeId }));
+}
+
 /** Consecutive days completed starting from Day 1, with no day skipped. */
 export function getStreak(profile: Profile): number {
   const completedDays = new Set(profile.sessions.filter((s) => s.completedAt !== null).map((s) => s.day));

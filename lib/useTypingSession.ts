@@ -66,24 +66,31 @@ export function useTypingSession({
   const soundEnabledRef = useRef(soundEnabled);
   soundEnabledRef.current = soundEnabled;
   const eventIdsRef = useRef({ correct: 0, miss: 0 });
+  // Consecutive-correct counter feeding the pitch ladder in sound.ts. Lives
+  // here (not in the pure engine) since it's a presentation detail, not
+  // scoring — resets on any miss or on a fresh target.
+  const comboRef = useRef(0);
 
   useEffect(() => {
     dispatch({ type: "reset", target });
     completedRef.current = false;
     setWpm(0);
     eventIdsRef.current = { correct: 0, miss: 0 };
+    comboRef.current = 0;
     // locked/errorHandling intentionally excluded: a mid-target level
     // change shouldn't reset progress, only a genuinely new target should.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
 
   useEffect(() => {
-    if (!soundEnabledRef.current) {
-      eventIdsRef.current = { correct: state.correctEventId, miss: state.missEventId };
-      return;
+    const missed = state.missEventId > eventIdsRef.current.miss;
+    const correct = state.correctEventId > eventIdsRef.current.correct;
+    if (missed) comboRef.current = 0;
+    else if (correct) comboRef.current += 1;
+    if (soundEnabledRef.current) {
+      if (correct) playCorrectTone(comboRef.current - 1);
+      if (missed) playIncorrectTone();
     }
-    if (state.correctEventId > eventIdsRef.current.correct) playCorrectTone();
-    if (state.missEventId > eventIdsRef.current.miss) playIncorrectTone();
     eventIdsRef.current = { correct: state.correctEventId, miss: state.missEventId };
   }, [state.correctEventId, state.missEventId]);
 

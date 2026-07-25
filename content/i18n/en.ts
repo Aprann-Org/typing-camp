@@ -44,6 +44,7 @@ const en = {
     isThisYouDeny: "No, someone else",
     dayLabel: "Which day are you on?",
     dayOption: "Day {day}",
+    dayComingSoon: "Coming soon",
     levelLabel: "Which level?",
     startButton: "Start typing",
     nameRequired: "Type your first name first.",
@@ -103,8 +104,13 @@ const en = {
       noWeakKeys: "Every key you drilled today is solid.",
       badgeLabel: "Badge earned",
       streakLabel: "Day streak",
+      badgeShelfLabel: "Badges earned this week",
       doneButton: "Done for today",
     },
+  },
+
+  typing: {
+    streak: "{count} in a row",
   },
 
   feedback: {

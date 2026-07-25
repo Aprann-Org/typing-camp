@@ -1,0 +1,58 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+}
+
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--background-raised);
+  border: 1.5px solid var(--border-subtle);
+  transition: background-color 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out;
+}
+
+.dot.done {
+  background: var(--accent-action);
+  border-color: var(--accent-action);
+}
+
+.dot.currentDot {
+  background: var(--accent-celebrate);
+  border-color: var(--accent-celebrate);
+  transform: scale(1.35);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.line {
+  width: 1.5rem;
+  height: 2px;
+  background: var(--border-subtle);
+  transition: background-color 200ms ease-out;
+}
+
+.line.lineDone {
+  background: var(--accent-action);
+}
+
+.flag {
+  margin-left: 0.35rem;
+  color: var(--foreground-muted);
+  transition: color 200ms ease-out, transform 200ms ease-out;
+}
+
+.flag.flagReached {
+  color: var(--accent-celebrate);
+  transform: scale(1.15);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1.35); }
+  50% { transform: scale(1.6); }
+}

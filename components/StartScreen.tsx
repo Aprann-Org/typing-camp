@@ -8,6 +8,10 @@ import { getAllProfiles, findProfileByName, createProfile, getLastCompletedDay }
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useI18n } from "@/context/I18nContext";
 import { BrandMark } from "@/components/BrandMark";
+import { Mascot } from "@/components/Mascot";
+import { DayPath } from "@/components/DayPath";
+import { LevelIcon } from "@/components/LevelIcon";
+import { NameLivePreview } from "@/components/NameLivePreview";
 import styles from "./StartScreen.module.css";
 
 type Step = "enterName" | "confirm" | "pickSession";
@@ -102,19 +106,14 @@ export function StartScreen({ onStart }: StartScreenProps) {
 
           <div className="flex w-full flex-col items-center gap-3">
             <span className="font-[family-name:var(--font-ui)] text-foreground-muted">{t("startScreen.dayLabel")}</span>
-            <div className="flex flex-wrap justify-center gap-2">
-              {availableDays.map((day) => (
-                <button
-                  key={day}
-                  className={`rounded-full px-4 py-2 font-[family-name:var(--font-ui)] transition-colors ${
-                    selectedDay === day ? "chip-selected" : "btn-secondary"
-                  }`}
-                  onClick={() => setSelectedDay(day)}
-                >
-                  {t("startScreen.dayOption", { day })}
-                </button>
-              ))}
-            </div>
+            <DayPath
+              availableDays={availableDays}
+              selectedDay={selectedDay}
+              lastCompletedDay={getLastCompletedDay(resolvedProfile)}
+              onSelect={setSelectedDay}
+              dayLabel={(day) => t("startScreen.dayOption", { day })}
+              comingSoonLabel={t("startScreen.dayComingSoon")}
+            />
           </div>
 
           <div className="flex w-full flex-col items-center gap-3">
@@ -128,7 +127,10 @@ export function StartScreen({ onStart }: StartScreenProps) {
                   }`}
                   onClick={() => setSelectedLevel(levelId)}
                 >
-                  <span className="font-semibold">{t(`levels.${levelId}.name`)}</span>
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <LevelIcon level={levelId} />
+                    {t(`levels.${levelId}.name`)}
+                  </span>
                   <span className="text-xs opacity-80">{t(`levels.${levelId}.subtitle`)}</span>
                 </button>
               ))}
@@ -150,6 +152,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
     <ScreenShell language={language} setLanguage={setLanguage} t={t}>
       <div className="flex w-full max-w-md flex-col items-center gap-8">
         <div className="flex flex-col items-center gap-2 text-center">
+          <Mascot pose="wave" size={56} />
           <h1 className="font-[family-name:var(--font-display)] text-3xl text-foreground">{t("startScreen.title")}</h1>
           <p className="font-[family-name:var(--font-ui)] text-foreground-muted">{t("startScreen.subtitle")}</p>
         </div>
@@ -169,6 +172,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
             }}
             autoFocus
           />
+          <NameLivePreview name={nameInput} />
           {error && <p className="font-[family-name:var(--font-ui)] text-sm text-[var(--finger-right-middle)]">{error}</p>}
           <button className="btn-primary mt-2 w-full px-6 py-3 text-lg" onClick={handleSubmitName}>
             {t("startScreen.startButton")}

@@ -1,3 +1,28 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Reserves its line whether or not a streak is showing, so the slot row
+   below never shifts when the counter appears or disappears mid-drill. */
+.streak {
+  height: 1.2rem;
+  font-family: var(--font-ui), sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-celebrate);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.streakVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .wrap {
   display: flex;
   flex-wrap: wrap;
@@ -46,6 +71,20 @@
   animation: land 150ms ease-out;
 }
 
+/* A quick radiating flare in the same finger color as the slot itself —
+   each correct slot only ever turns correct once, so this needs no JS
+   trigger; it just plays once on the transition into the .correct class. */
+.slot.correct::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--slot-color, var(--finger-left-index)) 0%, transparent 70%);
+  opacity: 0.7;
+  animation: sparkFade 260ms ease-out both;
+  pointer-events: none;
+}
+
 .slot.incorrect {
   color: var(--foreground);
   background: color-mix(in srgb, var(--finger-right-middle) 55%, transparent);
@@ -56,7 +95,35 @@
   opacity: 0.4;
 }
 
+/* Gentle-nudge level never marks or advances on a miss — this shake is the
+   only feedback a wrong key gets there, so it has to read clearly on its
+   own. Retriggered via a key remount (see TypingSlots.tsx), not a class
+   toggle, since the element can receive it on the same slot repeatedly. */
+.slot.shake {
+  animation: shake 220ms ease-in-out both;
+}
+
+.slot.idle {
+  animation: idlePulse 1.6s ease-in-out infinite;
+}
+
 @keyframes land {
   0% { transform: scale(1.25); }
   100% { transform: scale(1); }
+}
+
+@keyframes sparkFade {
+  0% { opacity: 0.7; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes idlePulse {
+  0%, 100% { outline-color: var(--foreground-muted); }
+  50% { outline-color: var(--accent-action); }
 }

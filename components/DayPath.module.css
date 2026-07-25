@@ -1,0 +1,58 @@
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+}
+
+.stop {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-subtle);
+  background: var(--background-raised);
+  font-family: var(--font-ui), sans-serif;
+  font-weight: 600;
+  color: var(--foreground-muted);
+  transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out, transform 150ms ease-out;
+}
+
+.stop:not(.locked):hover {
+  border-color: var(--accent-action);
+  color: var(--foreground);
+}
+
+.stop.done {
+  background: var(--accent-action);
+  border-color: var(--accent-action);
+  color: var(--accent-action-text);
+}
+
+.stop.selected {
+  border-color: var(--accent-celebrate);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-celebrate) 45%, transparent);
+  transform: scale(1.08);
+}
+
+.stop.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.line {
+  width: 1.25rem;
+  height: 2px;
+  flex-shrink: 0;
+  background: var(--border-subtle);
+}
+
+.line.lineDone {
+  background: var(--accent-action);
+}

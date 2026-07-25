@@ -1,0 +1,30 @@
+.root {
+  overflow: visible;
+}
+
+.armWave {
+  animation: wave 1.4s ease-in-out infinite;
+}
+
+.armUpRight {
+  animation: raiseRight 400ms ease-out both;
+}
+
+.armUpLeft {
+  animation: raiseLeft 400ms ease-out 60ms both;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(22deg); }
+}
+
+@keyframes raiseRight {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-95deg); }
+}
+
+@keyframes raiseLeft {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(95deg); }
+}

@@ -17,6 +17,10 @@ type KeyboardProps = {
    */
   helperChars?: ReadonlySet<string>;
   layoutId?: LayoutId;
+  /** The character just missed, if any — flashes that key red for one beat. */
+  missChar?: string | null;
+  /** Monotonic counter so a repeated miss on the same key (gentle-nudge level never advances) retriggers the flash. */
+  missEventId?: number;
 };
 
 function colorForFinger(finger: string): string {
@@ -30,6 +34,8 @@ export function Keyboard({
   justUnlockedChars,
   helperChars,
   layoutId = DEFAULT_LAYOUT,
+  missChar = null,
+  missEventId = 0,
 }: KeyboardProps) {
   const layout = LAYOUTS[layoutId];
 
@@ -48,16 +54,21 @@ export function Keyboard({
             const isNext =
               nextChar !== null && (keyDef.char === nextChar || (!!keyDef.shiftChar && keyDef.shiftChar === nextChar));
             const isJustUnlocked = justUnlockedChars?.has(keyDef.char) ?? false;
+            const isMissed = missChar !== null && (keyDef.char === missChar || keyDef.shiftChar === missChar);
             const display = keyDef.label ?? (keyDef.char === " " ? "" : keyDef.char);
 
             return (
               <div
-                key={keyDef.char}
+                // Remounted on every miss of this key (not just class-
+                // toggled) so a gentle-nudge child who mashes the same wrong
+                // key twice in a row sees the flash retrigger both times.
+                key={isMissed ? `${keyDef.char}-m${missEventId}` : keyDef.char}
                 className={[
                   styles.key,
                   isUnlocked ? styles.unlocked : isHelper ? styles.helper : styles.locked,
                   isNext ? styles.next : "",
                   isJustUnlocked ? styles.justUnlocked : "",
+                  isMissed ? styles.missed : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}

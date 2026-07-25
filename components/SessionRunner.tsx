@@ -9,7 +9,7 @@ import { emptySummary, mergeSummaries, computeKeyMastery, type StageTypingSummar
 import { calculateWpm } from "@/lib/wpm";
 import { addSession, getPriorVerseProgress, getStreak } from "@/lib/storage";
 import { useI18n } from "@/context/I18nContext";
-import { ProgressBar } from "@/components/ProgressBar";
+import { JourneyStepper } from "@/components/JourneyStepper";
 import { TeacherControls } from "@/components/TeacherControls";
 import { ReadyStage } from "./stages/ReadyStage";
 import { NewKeysStage } from "./stages/NewKeysStage";
@@ -38,6 +38,10 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
   const [summary, setSummary] = useState<StageTypingSummary>(emptySummary());
   const [verseCharsTypedUnassisted, setVerseCharsTypedUnassisted] = useState(0);
   const [finalStats, setFinalStats] = useState<{ wpm: number; accuracy: number; streak: number } | null>(null);
+  // Refreshed once the session's addSession() call lands, so the report
+  // stage's badge shelf includes the badge just earned this session, not
+  // only ones from before it started.
+  const [profileForReport, setProfileForReport] = useState(profile);
   const startedAtRef = useRef<number | null>(null);
   const savedRef = useRef(false);
 
@@ -92,6 +96,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
     };
     const updatedProfile = addSession(profile.id, session);
     setFinalStats({ wpm, accuracy, streak: updatedProfile ? getStreak(updatedProfile) : 0 });
+    if (updatedProfile) setProfileForReport(updatedProfile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
 
@@ -119,7 +124,7 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
     <div className="flex flex-1 flex-col">
       {stage !== "report" && (
         <div className="flex justify-center pt-4">
-          <ProgressBar
+          <JourneyStepper
             current={stageIndex + 1}
             total={STAGE_ORDER.length}
             label={t("progress.stageOf", { current: stageIndex + 1, total: STAGE_ORDER.length })}
@@ -187,6 +192,8 @@ export function SessionRunner({ profile, day, level, onSessionEnd }: SessionRunn
 
       {stage === "report" && (
         <ReportStage
+          profile={profileForReport}
+          badgeId={dayContent.badgeId}
           badgeLabel={displayText.badgeLabel}
           level={levelConfig}
           summary={summary}

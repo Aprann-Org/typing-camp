@@ -31,8 +31,15 @@ function beep(frequency: number, durationMs: number, volume: number): void {
   osc.stop(now + durationMs / 1000);
 }
 
-export function playCorrectTone(): void {
-  beep(660, 70, 0.1);
+// A short pitch ladder on consecutive correct keystrokes — each step in an
+// unbroken streak rings a little higher, capping out at 8 so a long run
+// doesn't climb into an unpleasant register. Resets to the base tone
+// whenever the caller's streak count resets (i.e. after any miss).
+const COMBO_STEP_HZ = 40;
+const COMBO_CAP = 8;
+
+export function playCorrectTone(streak = 0): void {
+  beep(660 + Math.min(streak, COMBO_CAP) * COMBO_STEP_HZ, 70, 0.1);
 }
 
 export function playIncorrectTone(): void {

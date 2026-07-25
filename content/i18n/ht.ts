@@ -69,6 +69,8 @@ const ht: Strings = {
     isThisYouDeny: "Non, se yon lòt moun",
     dayLabel: "Sou ki jou ou ye?",
     dayOption: "Jou {day}",
+    // REVIEW: "Ap vini" ("coming") for days 2-5, not yet built.
+    dayComingSoon: "Ap vini",
     levelLabel: "Ki nivo?",
     startButton: "Kòmanse tape",
     nameRequired: "Tape prenon ou anvan.",
@@ -144,8 +146,15 @@ const ht: Strings = {
       // REVIEW: "streak" has no compact Kreyòl equivalent; rendered as
       // "days one after another".
       streakLabel: "Jou youn dèyè lòt",
+      badgeShelfLabel: "Meday ou genyen semèn sa a",
       doneButton: "Fini pou jodi a",
     },
+  },
+
+  typing: {
+    // REVIEW: mirrors streakLabel's "one after another" phrasing, applied to
+    // a keystroke run rather than a day run.
+    streak: "{count} youn apre lòt",
   },
 
   feedback: {

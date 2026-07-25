@@ -63,6 +63,10 @@
   animation: lightUp 900ms ease-out 1;
 }
 
+.key.missed {
+  animation: missFlash 260ms ease-out 1;
+}
+
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
@@ -72,4 +76,11 @@
   0% { transform: scale(1); filter: brightness(1); }
   35% { transform: scale(1.18); filter: brightness(1.6); }
   100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* Reuses --finger-right-middle, the same red TypingSlots mixes in for an
+   incorrect slot — "wrong" already has one color in this app, not two. */
+@keyframes missFlash {
+  0% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--finger-right-middle) 70%, transparent); }
+  100% { box-shadow: 0 0 0 3px transparent; }
 }
