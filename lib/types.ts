@@ -1,0 +1,90 @@
+import type { LevelId } from "@/content/levels";
+
+export type Language = "en" | "ht";
+export type DayNumber = 1 | 2 | 3 | 4 | 5;
+
+export type Session = {
+  day: DayNumber;
+  level: LevelId;
+  startedAt: string;
+  completedAt: string | null;
+  durationSeconds: number;
+  wpm: number;
+  /** 0-1. Excludes guided-mode (locked-key) characters. */
+  accuracy: number;
+  charsTyped: number;
+  verseCharsTypedUnassisted: number;
+  /** Per-key miss counts, keyed by the character that was missed. */
+  keyErrors: Record<string, number>;
+  keysMastered: string[];
+  badgeEarned: string | null;
+  stagesCompleted: number;
+};
+
+export type Profile = {
+  id: string;
+  firstName: string;
+  language: Language;
+  createdAt: string;
+  sessions: Session[];
+  // Additive beyond the brief's base schema — see the project plan's
+  // "schema deviations" section for why these are per-profile.
+  soundEnabled: boolean;
+  lastLevel: LevelId;
+};
+
+export type DeviceSettings = {
+  calmMode: boolean;
+};
+
+export type StorageShape = {
+  version: 1;
+  profiles: Profile[];
+  deviceSettings: DeviceSettings;
+};
+
+export type DrillSpec = {
+  keys: string[];
+  pattern: string;
+};
+
+export type VerseConfig = {
+  text: string;
+  unlockedThroughDay: DayNumber;
+};
+
+// Split in two, per a locked project decision: the brief's original single
+// DayContent type tied practice content to the UI instruction-language
+// toggle, which is wrong for this camp — children should always practice
+// real Kreyòl words/verse regardless of which language their on-screen
+// instructions are shown in. See project memory for the full reasoning.
+
+/** Bilingual, follows the instruction-language toggle. Not typed by the child. */
+export type DayDisplayText = {
+  themeTitle: string;
+  bibleTruth: string;
+  scratchProject: string;
+  badgeLabel: string;
+};
+
+/** Single source per day, independent of the instruction-language toggle — this is what the child actually types. */
+export type DayPracticeContent = {
+  day: DayNumber;
+  newKeys: string[];
+  drills: DrillSpec[];
+  /** Unlocked keys only — validated at build by scripts/validate-content.ts. */
+  wordBank: string[];
+  /** May use locked keys; rendered in guided mode. */
+  themePhrases: string[];
+  verse: VerseConfig;
+  badgeId: string;
+};
+
+export type StageId =
+  | "ready"
+  | "newKeys"
+  | "wordBuild"
+  | "themeChallenge"
+  | "game"
+  | "verseBuilder"
+  | "report";

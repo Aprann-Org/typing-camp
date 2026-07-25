@@ -1,0 +1,93 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.counter {
+  font-family: var(--font-ui), sans-serif;
+  color: var(--foreground-muted);
+  text-align: center;
+}
+
+.verseRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.15rem;
+  max-width: 60rem;
+  cursor: text;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 2.4rem;
+  padding: 0 0.1rem;
+  border-radius: 0.35rem;
+  font-family: var(--font-typing), monospace;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+  color: var(--foreground-muted);
+}
+
+.slot.current {
+  outline: 2px solid var(--foreground-muted);
+  outline-offset: 1px;
+}
+
+.slot.correct {
+  color: var(--background);
+  background: var(--slot-color, var(--finger-left-index));
+}
+
+.slot.incorrect {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--finger-right-middle) 55%, transparent);
+}
+
+.slot.guided {
+  color: var(--foreground-muted);
+  opacity: 0.4;
+}
+
+/* The signature completion moment: the verse holds, then each letter's
+   finger color blooms in a left-to-right sweep, then settles. Staggered
+   per-letter via inline animation-delay (set at render time from the
+   letter's index) — a pure CSS keyframe sweep rather than a JS-driven
+   per-frame loop, so it costs nothing on old hardware and never touches
+   layout, only compositor-friendly filter/transform. */
+.slot.blooming {
+  animation: bloom 500ms ease-out;
+  animation-fill-mode: both;
+}
+
+@keyframes bloom {
+  0% { filter: brightness(1); transform: scale(1); }
+  40% { filter: brightness(1.7); transform: scale(1.12); }
+  100% { filter: brightness(1); transform: scale(1); }
+}
+
+.comparison {
+  font-family: var(--font-ui), sans-serif;
+  color: var(--foreground);
+  text-align: center;
+  min-height: 1.5em;
+}

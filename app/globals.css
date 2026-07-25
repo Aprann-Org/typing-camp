@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  /* Deep, near-saturated dark background — quiet enough for the eight
+     finger colors to carry all the visual weight, and dark enough to
+     survive fluorescent classroom light on a low-contrast 1366x768 panel. */
+  --background: #0d0e1a;
+  --background-raised: #14162a;
+  --foreground: #f2eee6;
+  --foreground-muted: #a6a3ad;
+  --border-subtle: #2a2c40;
+
+  /* Finger colors — canonical values live in content/fingers.ts; kept in
+     sync here as CSS vars for use in plain CSS (module stylesheets) where
+     importing the TS file isn't practical. If you change a hex value,
+     change it in both places. */
+  --finger-left-pinky: #e6007e;
+  --finger-left-ring: #1155cc;
+  --finger-left-middle: #00a651;
+  --finger-left-index: #ffc72c;
+  --finger-right-index: #ff6b1a;
+  --finger-right-middle: #e31e3d;
+  --finger-right-ring: #8e3b9d;
+  --finger-right-pinky: #00b4a6;
+  --finger-thumb: #f2e9dc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-raised: var(--background-raised);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-border-subtle: var(--border-subtle);
+
+  --font-display: var(--font-display);
+  --font-ui: var(--font-ui);
+  --font-typing: var(--font-typing);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Calm mode (teacher toggle) and prefers-reduced-motion both collapse to
+   this: transitions/animations resolve instantly instead of playing. Any
+   future keyframe animation should be written so this still looks correct
+   at t=0 and t=end, not just mid-animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:root[data-calm-mode="true"] *,
+:root[data-calm-mode="true"] *::before,
+:root[data-calm-mode="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Visible keyboard focus everywhere — this is a typing app operated
+   entirely without a mouse; focus must never be invisible. */
+:focus-visible {
+  outline: 3px solid var(--finger-left-index);
+  outline-offset: 2px;
+}

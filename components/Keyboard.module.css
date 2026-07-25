@@ -1,0 +1,75 @@
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: var(--background-raised);
+  border: 1px solid var(--border-subtle);
+}
+
+.row {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.key {
+  --key-color: var(--foreground-muted);
+  position: relative;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-typing), monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--background);
+  background: color-mix(in srgb, var(--key-color) 22%, var(--background-raised));
+  border: 1.5px solid color-mix(in srgb, var(--key-color) 35%, var(--background-raised));
+  transition: transform 60ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.key.unlocked {
+  background: var(--key-color);
+  border-color: color-mix(in srgb, var(--key-color) 70%, black);
+}
+
+.key.locked {
+  color: var(--foreground-muted);
+  opacity: 0.35;
+}
+
+/* Guided-mode helper key: not learned yet, but the child is being asked to
+   press it (e.g. letters of their own name on Day 1). Readable and tinted
+   with its finger color so it's findable, but hollow rather than filled —
+   visually distinct from a key they've actually been taught. */
+.key.helper {
+  color: var(--key-color);
+  background: color-mix(in srgb, var(--key-color) 14%, var(--background-raised));
+  border-style: dashed;
+  border-color: var(--key-color);
+  opacity: 0.9;
+}
+
+.key.next {
+  animation: pulse 900ms ease-in-out infinite;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--key-color) 60%, transparent);
+}
+
+.key.justUnlocked {
+  animation: lightUp 900ms ease-out 1;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes lightUp {
+  0% { transform: scale(1); filter: brightness(1); }
+  35% { transform: scale(1.18); filter: brightness(1.6); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
