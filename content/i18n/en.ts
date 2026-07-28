@@ -16,6 +16,7 @@ const en = {
     done: "Done",
     yes: "Yes",
     no: "No",
+    timeLabel: "Time:",
   },
 
   languageToggle: {
@@ -56,6 +57,29 @@ const en = {
     levelLabel: "Which level?",
     startButton: "Start typing",
     nameRequired: "Type your first name first.",
+    playGamesButton: "Just play a game",
+    viewWeekSummaryButton: "See my week",
+    setPinTitle: "Choose a 4-digit code",
+    setPinSubtitle: "You'll type this again next time to open your profile.",
+    enterPinTitle: "Enter your code",
+    pinPlaceholder: "0000",
+    pinMustBe4Digits: "Enter all 4 digits.",
+    pinIncorrect: "That code isn't right. Try again.",
+  },
+
+  playScreen: {
+    title: "Play a game",
+    subtitle: "Replay any game from a day you've finished — just for fun, nothing to save.",
+    dayLabel: "Which day's game?",
+    notYetLabel: "Finish this day first",
+    playButton: "Play",
+    noneYet: "Finish Day 1 first to unlock its game here.",
+    backButton: "Back",
+    bonusGamesLabel: "Bonus games",
+    ninjaGameLabel: "Ninja hop",
+    mazeGameLabel: "Maze runner",
+    starBlasterGameLabel: "Star blaster",
+    carRaceGameLabel: "Car race",
   },
 
   levels: {
@@ -119,6 +143,17 @@ const en = {
       badgeShelfLabel: "Badges earned this week",
       doneButton: "Done for today",
     },
+    weekSummary: {
+      title: "Your week",
+      subtitle: "Five days, five badges — look how far you came.",
+      wpmChartTitle: "Words per minute, day by day",
+      accuracyChartTitle: "Accuracy, day by day",
+      dayLabel: "Day {day}",
+      totalPracticeLabel: "Total practice time",
+      keysMasteredLabel: "Keys mastered this week",
+      badgesLabel: "Badges earned",
+      finishButton: "Finish",
+    },
   },
 
   typing: {
@@ -162,6 +197,18 @@ const en = {
     },
     day5FindTheSheep: {
       instruction: "Type each word to keep searching. The shepherd always finds the lost sheep.",
+    },
+    ninjaFlight: {
+      instruction: "Type each letter to send the ninja hopping toward the flag.",
+    },
+    mazeRunner: {
+      instruction: "Type each letter to move through the maze toward the door.",
+    },
+    starBlaster: {
+      instruction: "Type each letter to blast the next star out of the sky.",
+    },
+    carRace: {
+      instruction: "Type each letter to drive toward the checkered flag.",
     },
   },
 

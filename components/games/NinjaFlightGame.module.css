@@ -1,0 +1,35 @@
+/* Two nested groups, not one — a single element can't both transition a
+   translateX (the horizontal move, driven by the inline style below) and
+   play a translateY keyframe (the hop arc) at once: a CSS animation's
+   transform overrides an element's inline transform for its whole duration,
+   which would zero out the X position every time the ninja hops. The outer
+   group owns X, the inner owns the hop, so neither clobbers the other. */
+.ninjaTrack {
+  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.ninja {
+  animation: hop 420ms ease-out;
+}
+
+@keyframes hop {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-14px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ninjaTrack {
+    transition: none;
+  }
+  .ninja {
+    animation: none;
+  }
+}

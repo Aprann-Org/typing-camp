@@ -35,6 +35,7 @@ const ht: Strings = {
     done: "Fini",
     yes: "Wi",
     no: "Non",
+    timeLabel: "Tan:",
   },
 
   languageToggle: {
@@ -84,6 +85,29 @@ const ht: Strings = {
     levelLabel: "Ki nivo?",
     startButton: "Kòmanse tape",
     nameRequired: "Tape prenon ou anvan.",
+    playGamesButton: "Jwe yon jwèt sèlman",
+    viewWeekSummaryButton: "Gade semèn mwen",
+    setPinTitle: "Chwazi yon kòd 4 chif",
+    setPinSubtitle: "W ap tape kòd sa a ankò lòt fwa pou ouvri pwofil ou.",
+    enterPinTitle: "Antre kòd ou",
+    pinPlaceholder: "0000",
+    pinMustBe4Digits: "Antre tout 4 chif yo.",
+    pinIncorrect: "Kòd sa a pa bon. Eseye ankò.",
+  },
+
+  playScreen: {
+    title: "Jwe yon jwèt",
+    subtitle: "Rejwe jwèt yon jou ou fin fè — se pou plezi, pa gen anyen ki sove.",
+    dayLabel: "Jwèt ki jou?",
+    notYetLabel: "Fini jou sa a anvan",
+    playButton: "Jwe",
+    noneYet: "Fini Jou 1 anvan pou debloke jwèt li isit la.",
+    backButton: "Tounen",
+    bonusGamesLabel: "Jwèt bonis",
+    ninjaGameLabel: "Ninja k ap sote",
+    mazeGameLabel: "Laberent",
+    starBlasterGameLabel: "Kanon zetwal",
+    carRaceGameLabel: "Kous machin",
   },
 
   levels: {
@@ -163,6 +187,17 @@ const ht: Strings = {
       badgeShelfLabel: "Meday ou genyen semèn sa a",
       doneButton: "Fini pou jodi a",
     },
+    weekSummary: {
+      title: "Semèn ou an",
+      subtitle: "Senk jou, senk meday — gade jan ou vanse.",
+      wpmChartTitle: "Mo pa minit, chak jou",
+      accuracyChartTitle: "Presizyon, chak jou",
+      dayLabel: "Jou {day}",
+      totalPracticeLabel: "Tan pratik total",
+      keysMasteredLabel: "Touch ou metrize semèn sa a",
+      badgesLabel: "Meday ou genyen",
+      finishButton: "Fini",
+    },
   },
 
   typing: {
@@ -213,6 +248,18 @@ const ht: Strings = {
     },
     day5FindTheSheep: {
       instruction: "Tape chak mo pou kontinye chache. Gadò a toujou jwenn mouton ki pèdi a.",
+    },
+    ninjaFlight: {
+      instruction: "Tape chak lèt pou voye ninja a sote rive nan drapo a.",
+    },
+    mazeRunner: {
+      instruction: "Tape chak lèt pou avanse nan laberent rive nan pòt la.",
+    },
+    starBlaster: {
+      instruction: "Tape chak lèt pou eksploze pwochen zetwal la nan syèl la.",
+    },
+    carRace: {
+      instruction: "Tape chak lèt pou kondwi rive nan drapo damye a.",
     },
   },
 

@@ -61,7 +61,7 @@ export function findProfileByName(firstName: string): Profile | undefined {
   return matches.sort((a, b) => lastActivityMs(b) - lastActivityMs(a))[0];
 }
 
-export function createProfile(firstName: string, language: Language): Profile {
+export function createProfile(firstName: string, language: Language, pin: string): Profile {
   const createdAt = new Date().toISOString();
   const profile: Profile = {
     id: createProfileId(firstName, createdAt),
@@ -71,11 +71,21 @@ export function createProfile(firstName: string, language: Language): Profile {
     sessions: [],
     soundEnabled: false,
     lastLevel: DEFAULT_LEVEL,
+    pin,
   };
   const storage = readStorage();
   storage.profiles.push(profile);
   writeStorage(storage);
   return profile;
+}
+
+/**
+ * Whether `pin` opens `profile` — see Profile.pin's own doc for what this
+ * is and isn't. A profile with no pin set (created before this feature
+ * existed) opens for anyone, same as before.
+ */
+export function verifyPin(profile: Profile, pin: string): boolean {
+  return !profile.pin || profile.pin === pin;
 }
 
 export function updateProfile(updated: Profile): void {
@@ -148,6 +158,52 @@ export function getStreak(profile: Profile): number {
     streak += 1;
   }
   return streak;
+}
+
+export type WeekSummaryDay = {
+  day: DayNumber;
+  wpm: number;
+  accuracy: number;
+  charsTyped: number;
+  durationSeconds: number;
+  keysMastered: string[];
+  badgeId: string | null;
+};
+
+/**
+ * The full week's per-day stats for the end-of-week summary shown after Day
+ * 5 — most-recent completed session per day, same replay handling as
+ * getEarnedBadges. Returns null unless getStreak is 5 (all five days
+ * completed in order, no gaps): a trend chart with a missing day would read
+ * as "day 3 was skipped" rather than what it actually is, an incomplete
+ * week that hasn't earned this screen yet.
+ */
+export function getWeekSummary(profile: Profile): WeekSummaryDay[] | null {
+  if (getStreak(profile) !== 5) return null;
+
+  const byDay = new Map<DayNumber, Session>();
+  for (const session of profile.sessions) {
+    if (session.completedAt === null) continue;
+    const existing = byDay.get(session.day);
+    if (!existing || session.completedAt! > existing.completedAt!) {
+      byDay.set(session.day, session);
+    }
+  }
+
+  const days: DayNumber[] = [1, 2, 3, 4, 5];
+  return days.map((day) => {
+    // Non-null: getStreak === 5 guarantees every day 1-5 has a completed session.
+    const s = byDay.get(day)!;
+    return {
+      day,
+      wpm: s.wpm,
+      accuracy: s.accuracy,
+      charsTyped: s.charsTyped,
+      durationSeconds: s.durationSeconds,
+      keysMastered: s.keysMastered,
+      badgeId: s.badgeEarned,
+    };
+  });
 }
 
 export function getDeviceSettings(): DeviceSettings {

@@ -4,22 +4,32 @@ import { useEffect, useState } from "react";
 import type { DayNumber, Profile } from "@/lib/types";
 import { LEVEL_ORDER, DEFAULT_LEVEL, type LevelId } from "@/content/levels";
 import { getAvailableDays } from "@/content/days";
-import { getAllProfiles, findProfileByName, createProfile, getLastCompletedDay } from "@/lib/storage";
+import { getAllProfiles, findProfileByName, createProfile, verifyPin, getLastCompletedDay, getWeekSummary } from "@/lib/storage";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useI18n } from "@/context/I18nContext";
 import { Mascot } from "@/components/Mascot";
 import { DayPath } from "@/components/DayPath";
 import { LevelIcon } from "@/components/LevelIcon";
 import { NameLivePreview } from "@/components/NameLivePreview";
+import { PinInput } from "@/components/PinInput";
 import styles from "./StartScreen.module.css";
 
-type Step = "enterName" | "confirm" | "pickSession";
+// setPin: a brand-new profile (no existing match, or "No, someone else")
+// chooses its 4-digit code before it's created.
+// enterPin: an existing profile (picked from the confirm prompt or tapped
+// directly from the "already typed this week" list) must repeat its code
+// before it opens — see Profile.pin's own doc for what this protects.
+type Step = "enterName" | "confirm" | "setPin" | "enterPin" | "pickSession";
 
 type StartScreenProps = {
   onStart: (profile: Profile, day: DayNumber, level: LevelId) => void;
+  /** Omitted entirely once a profile has no completed day yet — there's no game to play. */
+  onPlay: (profile: Profile) => void;
+  /** Reopens the week summary screen — only offered once the full week (all 5 days, no gaps) is done. */
+  onViewWeekSummary: (profile: Profile) => void;
 };
 
-export function StartScreen({ onStart }: StartScreenProps) {
+export function StartScreen({ onStart, onPlay, onViewWeekSummary }: StartScreenProps) {
   const { t } = useI18n();
   const { language, setLanguage, setActiveProfile } = useAppSettings();
   const [step, setStep] = useState<Step>("enterName");
@@ -30,6 +40,12 @@ export function StartScreen({ onStart }: StartScreenProps) {
   const [selectedDay, setSelectedDay] = useState<DayNumber>(1);
   const [selectedLevel, setSelectedLevel] = useState<LevelId>(DEFAULT_LEVEL);
   const [error, setError] = useState<string | null>(null);
+  // The name a brand-new profile will be created with, once its code is set.
+  const [pendingName, setPendingName] = useState("");
+  // The existing profile awaiting its code before it can open.
+  const [pendingProfile, setPendingProfile] = useState<Profile | null>(null);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState<string | null>(null);
 
   useEffect(() => {
     // getAllProfiles() reads localStorage, which doesn't exist on the
@@ -50,6 +66,20 @@ export function StartScreen({ onStart }: StartScreenProps) {
     setStep("pickSession");
   }
 
+  function startPinEntry(profile: Profile) {
+    setPendingProfile(profile);
+    setPinInput("");
+    setPinError(null);
+    setStep("enterPin");
+  }
+
+  function startPinCreation(name: string) {
+    setPendingName(name);
+    setPinInput("");
+    setPinError(null);
+    setStep("setPin");
+  }
+
   function handleSubmitName() {
     const trimmed = nameInput.trim();
     if (!trimmed) {
@@ -62,18 +92,35 @@ export function StartScreen({ onStart }: StartScreenProps) {
       setCandidate(match);
       setStep("confirm");
     } else {
-      selectProfile(createProfile(trimmed, language));
+      startPinCreation(trimmed);
     }
   }
 
   function handleConfirmYes() {
-    if (candidate) selectProfile(candidate);
+    if (candidate) startPinEntry(candidate);
   }
 
   function handleConfirmNo() {
-    const created = createProfile(nameInput.trim(), language);
     setCandidate(null);
-    selectProfile(created);
+    startPinCreation(nameInput.trim());
+  }
+
+  function handleCreatePin() {
+    if (pinInput.length !== 4) {
+      setPinError(t("startScreen.pinMustBe4Digits"));
+      return;
+    }
+    selectProfile(createProfile(pendingName, language, pinInput));
+  }
+
+  function handleVerifyPin() {
+    if (!pendingProfile) return;
+    if (verifyPin(pendingProfile, pinInput)) {
+      selectProfile(pendingProfile);
+    } else {
+      setPinError(t("startScreen.pinIncorrect"));
+      setPinInput("");
+    }
   }
 
   if (step === "confirm" && candidate) {
@@ -96,6 +143,44 @@ export function StartScreen({ onStart }: StartScreenProps) {
               {t("startScreen.isThisYouDeny")}
             </button>
           </div>
+        </div>
+      </ScreenShell>
+    );
+  }
+
+  if (step === "setPin") {
+    return (
+      <ScreenShell language={language} setLanguage={setLanguage} t={t}>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <h1 className="font-[family-name:var(--font-display)] text-2xl text-foreground">{t("startScreen.setPinTitle")}</h1>
+          <p className="font-[family-name:var(--font-ui)] text-foreground-muted">{t("startScreen.setPinSubtitle")}</p>
+          <PinInput value={pinInput} onChange={setPinInput} onSubmit={handleCreatePin} placeholder={t("startScreen.pinPlaceholder")} />
+          {pinError && <p className="font-[family-name:var(--font-ui)] text-sm text-[var(--finger-right-middle)]">{pinError}</p>}
+          <button className="btn-primary px-6 py-3 text-lg" onClick={handleCreatePin}>
+            {t("common.continue")}
+          </button>
+          <button className="font-[family-name:var(--font-ui)] text-sm text-foreground-muted" onClick={() => setStep("enterName")}>
+            {t("common.back")}
+          </button>
+        </div>
+      </ScreenShell>
+    );
+  }
+
+  if (step === "enterPin" && pendingProfile) {
+    return (
+      <ScreenShell language={language} setLanguage={setLanguage} t={t}>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <h1 className="font-[family-name:var(--font-display)] text-2xl text-foreground">{t("startScreen.enterPinTitle")}</h1>
+          <p className="font-[family-name:var(--font-ui)] text-lg text-foreground">{pendingProfile.firstName}</p>
+          <PinInput value={pinInput} onChange={setPinInput} onSubmit={handleVerifyPin} placeholder={t("startScreen.pinPlaceholder")} />
+          {pinError && <p className="font-[family-name:var(--font-ui)] text-sm text-[var(--finger-right-middle)]">{pinError}</p>}
+          <button className="btn-primary px-6 py-3 text-lg" onClick={handleVerifyPin}>
+            {t("common.continue")}
+          </button>
+          <button className="font-[family-name:var(--font-ui)] text-sm text-foreground-muted" onClick={() => setStep("enterName")}>
+            {t("common.back")}
+          </button>
         </div>
       </ScreenShell>
     );
@@ -148,6 +233,18 @@ export function StartScreen({ onStart }: StartScreenProps) {
           >
             {t("startScreen.startButton")}
           </button>
+
+          {getLastCompletedDay(resolvedProfile) !== null && (
+            <button className="btn-secondary w-full px-6 py-2" onClick={() => onPlay(resolvedProfile)}>
+              {t("startScreen.playGamesButton")}
+            </button>
+          )}
+
+          {getWeekSummary(resolvedProfile) !== null && (
+            <button className="btn-secondary w-full px-6 py-2" onClick={() => onViewWeekSummary(resolvedProfile)}>
+              {t("startScreen.viewWeekSummaryButton")}
+            </button>
+          )}
         </div>
       </ScreenShell>
     );
@@ -196,7 +293,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
                   <button
                     key={profile.id}
                     className="btn-secondary flex items-center gap-2 px-4 py-2"
-                    onClick={() => selectProfile(profile)}
+                    onClick={() => startPinEntry(profile)}
                   >
                     <span>{profile.firstName}</span>
                     {lastDay && <span className="text-xs text-foreground-muted">{t("startScreen.dayOption", { day: lastDay })}</span>}

@@ -8,7 +8,7 @@ import { STAGE_ORDER } from "@/lib/session";
 import { stageSegmentShares } from "@/lib/session-progress";
 import { emptySummary, mergeSummaries, computeKeyMastery, type StageTypingSummary } from "@/lib/typing-engine";
 import { calculateWpm } from "@/lib/wpm";
-import { addSession, getPriorVerseProgress, getStreak } from "@/lib/storage";
+import { addSession, getPriorVerseProgress, getStreak, getWeekSummary } from "@/lib/storage";
 import { useI18n } from "@/context/I18nContext";
 import { JourneyStepper } from "@/components/JourneyStepper";
 import { TeacherControls } from "@/components/TeacherControls";
@@ -19,6 +19,7 @@ import { ThemeChallengeStage } from "./stages/ThemeChallengeStage";
 import { GameStage } from "./stages/GameStage";
 import { VerseBuilderStage } from "./stages/VerseBuilderStage";
 import { ReportStage } from "./stages/ReportStage";
+import { WeekSummaryStage } from "./stages/WeekSummaryStage";
 
 type SessionRunnerProps = {
   profile: Profile;
@@ -48,6 +49,9 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
   // stage's badge shelf includes the badge just earned this session, not
   // only ones from before it started.
   const [profileForReport, setProfileForReport] = useState(profile);
+  // Shown after Day 5's own report, in place of ending the session
+  // immediately — see the weekSummary useMemo below for the completion check.
+  const [showWeekSummary, setShowWeekSummary] = useState(false);
   // Lazy initial state — the initializer runs exactly once, at mount, which
   // is the sanctioned way to capture an impure one-time value like
   // Date.now() (a plain render-body read would differ between the server
@@ -73,6 +77,15 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
   }, [dayContent, profile.firstName]);
 
   const priorVerseProgress = useMemo(() => getPriorVerseProgress(profile, day), [profile, day]);
+
+  // Non-null only once profileForReport (updated the instant this session
+  // saves) shows all 5 days completed in order — see getWeekSummary's own
+  // doc for why a gap disqualifies it. Recomputed off profileForReport, not
+  // profile, so it reflects the badge/session this very session just earned.
+  const weekSummary = useMemo(
+    () => (day === 5 ? getWeekSummary(profileForReport) : null),
+    [day, profileForReport]
+  );
 
   // Segment lengths for the stepper, sized by how much typing each stage
   // actually holds — New Keys is most of the day, and the bar now says so.
@@ -227,7 +240,7 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
         />
       )}
 
-      {stage === "report" && (
+      {stage === "report" && !showWeekSummary && (
         <ReportStage
           profile={profileForReport}
           badgeId={dayContent.badgeId}
@@ -237,8 +250,12 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
           wpm={finalStats?.wpm ?? 0}
           accuracy={finalStats?.accuracy ?? 1}
           streak={finalStats?.streak ?? 0}
-          onDone={onSessionEnd}
+          onDone={() => (weekSummary ? setShowWeekSummary(true) : onSessionEnd())}
         />
+      )}
+
+      {stage === "report" && showWeekSummary && weekSummary && (
+        <WeekSummaryStage language={profile.language} level={levelConfig} weekSummary={weekSummary} onDone={onSessionEnd} />
       )}
 
       <TeacherControls onSkipStage={stage !== "report" ? goToNextStage : undefined} />

@@ -31,6 +31,16 @@ export type Profile = {
   // "schema deviations" section for why these are per-profile.
   soundEnabled: boolean;
   lastLevel: LevelId;
+  /**
+   * A 4-digit code the child sets when their profile is created, asked for
+   * again whenever that name is picked from the shared machine's profile
+   * list — just enough to stop another kid on the same device from opening
+   * someone else's progress by tapping their name, not real account
+   * security (there's no server, no password hashing; see lib/storage.ts's
+   * verifyPin). Optional so profiles created before this feature existed
+   * still open with no PIN prompt at all.
+   */
+  pin?: string;
 };
 
 export type DeviceSettings = {
