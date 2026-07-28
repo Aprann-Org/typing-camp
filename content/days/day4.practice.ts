@@ -17,6 +17,16 @@ import type { DayPracticeContent } from "@/lib/types";
 const day4Practice: DayPracticeContent = {
   day: 4,
   newKeys: ["z", "x", "c", "v", "b"],
+  // All five keys are the left hand's remaining bottom row, so there's no
+  // mirrored right-hand partner left to pair with (unlike Days 2-3) — this
+  // splits by finger instead, strongest to weakest: v/b (both left index,
+  // same relationship as Day 1's g/h), then middle/ring/pinky solo.
+  newKeyGroups: [
+    ["v", "b"],
+    ["c"],
+    ["x"],
+    ["z"],
+  ],
   drills: [
     { keys: ["b"], pattern: "b b b b b b" },
     { keys: ["c"], pattern: "c c c c c c" },

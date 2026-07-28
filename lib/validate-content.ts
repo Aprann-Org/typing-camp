@@ -88,6 +88,27 @@ export function validateContent(): ContentProblem[] {
       keyTaughtOn.set(key, day);
     }
 
+    // Checkpoint groups must account for every one of today's new keys
+    // exactly once — a missing key would silently never get a New Keys
+    // stage item, a duplicate would silently repeat one.
+    if (content.newKeyGroups) {
+      const seen = new Map<string, number>();
+      for (const group of content.newKeyGroups) {
+        for (const key of group) {
+          seen.set(key, (seen.get(key) ?? 0) + 1);
+        }
+      }
+      for (const key of content.newKeys) {
+        const count = seen.get(key) ?? 0;
+        if (count === 0) add(day, "newKeyGroups", `"${key}" is in newKeys but missing from newKeyGroups`);
+        else if (count > 1) add(day, "newKeyGroups", `"${key}" appears in ${count} newKeyGroups groups, should be 1`);
+      }
+      const newKeysSet = new Set(content.newKeys);
+      for (const key of seen.keys()) {
+        if (!newKeysSet.has(key)) add(day, "newKeyGroups", `"${key}" is grouped but not in newKeys`);
+      }
+    }
+
     // Drills introduce today's keys, so they may only use today's keys
     // (plus the space that separates them).
     const todaysKeys = new Set([...content.newKeys, " "]);

@@ -48,10 +48,12 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
   // stage's badge shelf includes the badge just earned this session, not
   // only ones from before it started.
   const [profileForReport, setProfileForReport] = useState(profile);
-  const startedAtRef = useRef<number | null>(null);
+  // Lazy initial state — the initializer runs exactly once, at mount, which
+  // is the sanctioned way to capture an impure one-time value like
+  // Date.now() (a plain render-body read would differ between the server
+  // render and the client's hydration render).
+  const [startedAt] = useState(() => Date.now());
   const savedRef = useRef(false);
-
-  if (startedAtRef.current === null) startedAtRef.current = Date.now();
 
   const unlockedChars = useMemo(() => getCumulativeUnlockedKeys(day), [day]);
   const shiftUnlocked = isShiftUnlocked(day);
@@ -92,7 +94,6 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
   useEffect(() => {
     if (!dayContent || !displayText || stage !== "report" || savedRef.current) return;
     savedRef.current = true;
-    const startedAt = startedAtRef.current ?? Date.now();
     const now = Date.now();
     const wpm = calculateWpm(summary.correctCount, startedAt, now);
     const attempted = summary.correctCount + summary.incorrectCount;
@@ -117,6 +118,12 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
     };
     const updatedProfile = addSession(profile.id, session);
     setFinalStats({ wpm, accuracy, streak: updatedProfile ? getStreak(updatedProfile) : 0 });
+    // addSession is a write to external storage — it can only happen in an
+    // effect, and this state update is a direct consequence of its result,
+    // not a value derivable from props/state during render, so it doesn't
+    // fit the "adjust state when a prop changes" pattern the lint rule
+    // otherwise wants here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (updatedProfile) setProfileForReport(updatedProfile);
     onProgressSaved();
     // eslint-disable-next-line react-hooks/exhaustive-deps

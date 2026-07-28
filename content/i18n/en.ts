@@ -83,6 +83,10 @@ const en = {
       title: "New keys",
       instruction: "Let's meet today's new keys.",
       tryIt: "Try it",
+      checkpointTitle: "Nice work!",
+      checkpointMessage: "You just learned {keys}.",
+      checkpointContinue: "Next keys",
+      spaceKeyLabel: "Space",
     },
     wordBuild: {
       title: "Word build",

@@ -71,6 +71,17 @@ export type DayDisplayText = {
 export type DayPracticeContent = {
   day: DayNumber;
   newKeys: string[];
+  /**
+   * Optional pedagogical clusters of newKeys (e.g. finger pairs) that the New
+   * Keys stage teaches as separate checkpoints, with a short breather between
+   * groups, instead of one uninterrupted run through every key. Order here
+   * is the teaching order — it does not need to match newKeys' order. Every
+   * key in newKeys must appear in exactly one group (validated at build by
+   * scripts/validate-content.ts). Omit to keep the stage as a single
+   * checkpoint, unchanged from before — most days don't have enough new
+   * keys to need splitting.
+   */
+  newKeyGroups?: string[][];
   drills: DrillSpec[];
   /** Unlocked keys only — validated at build by scripts/validate-content.ts. */
   wordBank: string[];

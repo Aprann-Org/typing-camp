@@ -66,7 +66,10 @@ export function VerseBuilderStage({
 
   const [completing, setCompleting] = useState(false);
   const [blooming, setBlooming] = useState(false);
-  const finalCountRef = useRef(0);
+  // The count the finish screen displays — real render state (it's read
+  // directly in the JSX below), not a ref, since a ref's `.current` can't be
+  // read during render.
+  const [finalCount, setFinalCount] = useState(0);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const { state, handleKeyDown, inputRef } = useTypingSession({
@@ -75,11 +78,12 @@ export function VerseBuilderStage({
     errorHandling: level.errorHandling,
     soundEnabled,
     onComplete: (finalState: TypingState) => {
-      finalCountRef.current = finalState.correctCount + finalState.incorrectCount;
+      const count = finalState.correctCount + finalState.incorrectCount;
+      setFinalCount(count);
       setCompleting(true);
       const t1 = setTimeout(() => setBlooming(true), HOLD_MS);
       const t2 = setTimeout(() => {
-        onComplete(summarizeTypingState(finalState), finalCountRef.current);
+        onComplete(summarizeTypingState(finalState), count);
       }, HOLD_MS + BLOOM_MS);
       timersRef.current.push(t1, t2);
     },
@@ -89,6 +93,12 @@ export function VerseBuilderStage({
 
   useEffect(() => {
     return () => {
+      // Reading timersRef.current here on purpose: we want whatever timers
+      // have accumulated by unmount time (they're scheduled well after this
+      // effect runs, on typing completion), not a snapshot from mount. This
+      // isn't a DOM ref, so the exhaustive-deps "copy ref to a variable"
+      // suggestion doesn't apply — that would miss timers scheduled later.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       timersRef.current.forEach(clearTimeout);
     };
   }, []);
@@ -143,9 +153,9 @@ export function VerseBuilderStage({
             ? t("stages.verseBuilder.comparisonLine", {
                 day: priorProgress.day,
                 previous: priorProgress.charsTypedUnassisted,
-                current: finalCountRef.current,
+                current: finalCount,
               })
-            : t("stages.verseBuilder.firstTimeLine", { current: finalCountRef.current })}
+            : t("stages.verseBuilder.firstTimeLine", { current: finalCount })}
         </p>
       )}
     </div>

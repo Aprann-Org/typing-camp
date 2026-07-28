@@ -48,34 +48,93 @@ export function buildAlternationBursts(
 }
 
 /**
- * The full New Keys queue: for each drilled key, the author-written isolated
- * pattern once ("f f f f f f" from content/days), then — once at least one
- * other key is already known — level-scaled alternation bursts mixing the new
- * key with everything known so far. This is what actually varies content
- * between levels and between attempts; nothing here repeats an identical
- * target back to back.
+ * The full New Keys sequence: for each drilled key, the author-written
+ * isolated pattern once ("f f f f f f" from content/days), then — once at
+ * least one other key is already known — level-scaled alternation bursts
+ * mixing the new key with everything known so far. This is what actually
+ * varies content between levels and between attempts; nothing here repeats
+ * an identical target back to back.
  *
  * Lives here rather than in NewKeysStage because the journey stepper needs to
  * know how long this stage is BEFORE the child enters it — it is by far the
  * longest stage of the day, and sizing its segment honestly is the whole
  * point (see lib/session-progress.ts).
  */
-export function buildNewKeysQueue(dayContent: DayPracticeContent, level: LevelConfig): string[] {
+// buildAlternationBursts runs once per new-key introduction after the first,
+// so a day's total alternation volume is level.drillRepetitions.burstCount *
+// (drilled keys - 1) — fine on days with 5-6 new keys, but Day 1's 11 keys
+// pushed Starter to 26 items and Builder to 31 (see stageWorkUnits' own
+// comment about Day 1 New Keys running "hundreds of keystrokes"). This caps
+// the day's total burst count rather than the per-level shape: on days with
+// few transitions it's a no-op (the min() below just returns burstCount
+// unchanged); it only kicks in once a day has enough new keys that the
+// straight multiplication would balloon past what a short day produces.
+const TARGET_TOTAL_BURSTS = 10;
+
+export type NewKeysCheckpoint = {
+  /** The keys introduced in this checkpoint, in teaching order. */
+  keys: string[];
+  /** This checkpoint's slice of the New Keys queue — see buildNewKeysQueue. */
+  items: string[];
+};
+
+/**
+ * How dayContent.newKeyGroups splits today's drilled keys into checkpoints.
+ * Falls back to one group (today's whole drilled-keys list, in newKeys'
+ * order) when the day has no authored groups — the pre-checkpoint behavior,
+ * unchanged. A group is dropped once none of its keys survive this level's
+ * newKeyScope filtering (e.g. Starter's "half" scope on Day 1 drops every
+ * group down to whichever of its keys made the cut), and any key present in
+ * newKeys but missing from every group is not silently lost — it still
+ * belongs to drilledKeysList, so scripts/validate-content.ts is what catches
+ * an incomplete newKeyGroups authoring mistake, not this function.
+ */
+function resolveCheckpointGroups(dayContent: DayPracticeContent, drilledKeysList: string[]): string[][] {
+  const drilledSet = new Set(drilledKeysList);
+  if (!dayContent.newKeyGroups) return [drilledKeysList];
+  const groups = dayContent.newKeyGroups
+    .map((group) => group.filter((key) => drilledSet.has(key)))
+    .filter((group) => group.length > 0);
+  return groups.length > 0 ? groups : [drilledKeysList];
+}
+
+/**
+ * The New Keys stage as a sequence of checkpoints (see NewKeysCheckpoint):
+ * groups of keys taught together with a breather in between, instead of one
+ * uninterrupted run through every key of the day. Days without
+ * dayContent.newKeyGroups authored (most days — see that field's doc) come
+ * back as a single checkpoint, identical to the old un-grouped behavior.
+ */
+export function buildNewKeysCheckpoints(dayContent: DayPracticeContent, level: LevelConfig): NewKeysCheckpoint[] {
   const drilledKeysList = getDrilledKeys(dayContent.newKeys, level.newKeyScope);
-  const items: string[] = [];
+  const groups = resolveCheckpointGroups(dayContent, drilledKeysList);
+
+  const transitions = Math.max(0, drilledKeysList.length - 1);
+  const burstCount =
+    transitions > 0
+      ? Math.max(1, Math.round(Math.min(level.drillRepetitions.burstCount, TARGET_TOTAL_BURSTS / transitions)))
+      : level.drillRepetitions.burstCount;
+
   const known: string[] = [];
+  const checkpoints: NewKeysCheckpoint[] = [];
 
-  for (const key of drilledKeysList) {
-    const authored = dayContent.drills.find((d) => d.keys.length === 1 && d.keys[0] === key);
-    if (authored) items.push(authored.pattern);
+  for (const group of groups) {
+    const items: string[] = [];
+    for (const key of group) {
+      const authored = dayContent.drills.find((d) => d.keys.length === 1 && d.keys[0] === key);
+      if (authored) items.push(authored.pattern);
 
-    if (known.length > 0) {
-      items.push(
-        ...buildAlternationBursts(key, known, level.drillRepetitions.burstCount, level.drillRepetitions.burstLength)
-      );
+      if (known.length > 0) {
+        items.push(...buildAlternationBursts(key, known, burstCount, level.drillRepetitions.burstLength));
+      }
+      known.push(key);
     }
-    known.push(key);
+    checkpoints.push({ keys: group, items });
   }
 
-  return items;
+  return checkpoints;
+}
+
+export function buildNewKeysQueue(dayContent: DayPracticeContent, level: LevelConfig): string[] {
+  return buildNewKeysCheckpoints(dayContent, level).flatMap((checkpoint) => checkpoint.items);
 }

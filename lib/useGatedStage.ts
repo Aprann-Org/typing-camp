@@ -25,7 +25,13 @@ export function useGatedStage(accuracyGate: number | null, onPass: (summary: Sta
   const [retrying, setRetrying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onPassRef = useRef(onPass);
-  onPassRef.current = onPass;
+
+  // Written here (never read during render) so submitAttempt's timeout
+  // callback always calls the latest onPass without onPass needing to be a
+  // dependency of anything.
+  useEffect(() => {
+    onPassRef.current = onPass;
+  });
 
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);

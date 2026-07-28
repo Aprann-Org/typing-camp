@@ -88,7 +88,7 @@ const ht: Strings = {
 
   levels: {
     starter: { name: "Kòmansè", subtitle: "Premye fwa m ap tape" },
-    builder: { name: "Konstriktè", subtitle: "Mwen te deja tape" },
+    builder: { name: "Konstriktè", subtitle: "Mwen konn tape deja" },
     // REVIEW: "Flyer" deliberately NOT translated as "Volè" — "vòlè" means
     // thief, and the two are near-homophones in speech, which is a bad
     // thing to call a child. "Zwazo" (bird) keeps the flying idea, is
@@ -119,6 +119,10 @@ const ht: Strings = {
       title: "Nouvo touch",
       instruction: "Ann rankontre nouvo touch jodi a.",
       tryIt: "Eseye l",
+      checkpointTitle: "Byen fèt!",
+      checkpointMessage: "Ou fèk aprann {keys}.",
+      checkpointContinue: "Pwochen touch yo",
+      spaceKeyLabel: "Espas",
     },
     wordBuild: {
       title: "Bati mo",

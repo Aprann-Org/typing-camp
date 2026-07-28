@@ -24,6 +24,16 @@ import type { DayPracticeContent } from "@/lib/types";
 const day2Practice: DayPracticeContent = {
   day: 2,
   newKeys: ["e", "r", "t", "y", "u", "i"],
+  // Three checkpoints, each a mirrored same-finger pair one row above Day
+  // 1's home row: e/i (middle fingers), r/u (index fingers, directly above
+  // f/j), t/y (index fingers again, directly above g/h — the same reach
+  // relationship Day 1's g/h had to f/j). See NewKeysStage / Day 1's
+  // newKeyGroups doc for why this stage is checkpointed at all.
+  newKeyGroups: [
+    ["e", "i"],
+    ["r", "u"],
+    ["t", "y"],
+  ],
   drills: [
     { keys: ["e"], pattern: "e e e e e e" },
     { keys: ["i"], pattern: "i i i i i i" },

@@ -36,6 +36,21 @@ import type { DayPracticeContent } from "@/lib/types";
 const day1Practice: DayPracticeContent = {
   day: 1,
   newKeys: ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";", " "],
+  // Day 1 has 11 new keys — far more than any other day — so the New Keys
+  // stage teaches them as five checkpoints (a short breather between each)
+  // instead of one unbroken run through all eleven. Order is finger pairs,
+  // starting with F/J: the same anchor keys the Ready stage right before
+  // this already told the child to rest their index fingers on ("Feel the
+  // bump"), so New Keys picks up exactly where Ready left off rather than
+  // starting over at "a". See lib/drill-generator.ts's buildNewKeysCheckpoints.
+  newKeyGroups: [
+    ["f", "j"],
+    ["d", "k"],
+    ["s", "l"],
+    ["a", ";"],
+    ["g", "h"],
+    [" "],
+  ],
   // Author-written isolated intro for each new key; alternation-with-
   // known-keys practice is generated dynamically — see lib/drill-generator.ts.
   drills: [

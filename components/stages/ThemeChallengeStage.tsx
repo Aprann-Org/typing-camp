@@ -36,10 +36,15 @@ export function ThemeChallengeStage({ targets, level, unlockedChars, shiftUnlock
     [target, unlockedChars, shiftUnlocked]
   );
 
-  useEffect(() => {
+  // See NewKeysStage/useTypingSession's identical pattern: reset compared
+  // during render rather than via an effect, so it lands in the same commit
+  // as the attempt change. State, not a ref — refs can't be touched during render.
+  const [prevAttempt, setPrevAttempt] = useState(attempt);
+  if (prevAttempt !== attempt) {
+    setPrevAttempt(attempt);
     setIndex(0);
     setSummary(emptySummary());
-  }, [attempt]);
+  }
 
   useEffect(() => {
     if (targets.length > 0) onProgress?.(index / targets.length);

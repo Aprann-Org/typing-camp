@@ -49,11 +49,22 @@ export function TypingSlots({ state, inputRef, onKeyDown, layoutId = DEFAULT_LAY
   // render, so this starts at a placeholder rather than a live timestamp.
   const lastActivityRef = useRef(0);
 
-  // A fresh target (new drill/word/phrase) always starts a fresh streak and
-  // idle clock, regardless of how the previous one ended.
-  useEffect(() => {
+  // A fresh target (new drill/word/phrase) always starts a fresh streak,
+  // compared during render (React's "adjusting state when a prop changes"
+  // pattern) rather than via an effect — state, not a ref, since refs can't
+  // be read or written during render at all.
+  const [prevTarget, setPrevTarget] = useState(state.target);
+  if (prevTarget !== state.target) {
+    setPrevTarget(state.target);
     setStreak(0);
     setIdle(false);
+  }
+
+  // The ref/Date.now() half of the same reset — both are only legal inside
+  // an effect (refs can't be touched during render; Date.now() during
+  // render is exactly the kind of impure call that produces a hydration
+  // mismatch), so it can't join the render-time block above.
+  useEffect(() => {
     eventIdsRef.current = { correct: state.correctEventId, miss: state.missEventId };
     lastActivityRef.current = Date.now();
     // eslint-disable-next-line react-hooks/exhaustive-deps
