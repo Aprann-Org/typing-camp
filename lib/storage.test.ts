@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getWeekSummary, verifyPin } from "./storage";
+import { getWeekSummary, verifyPin, createProfileFromProgressCode, getLastCompletedDay, getStreak, getEarnedBadges } from "./storage";
 import type { DayNumber, Profile, Session } from "./types";
 
 function session(day: DayNumber, overrides: Partial<Session> = {}): Session {
@@ -95,5 +95,24 @@ describe("getWeekSummary", () => {
     ]);
     const summary = getWeekSummary(p);
     expect(summary!.find((s) => s.day === 5)?.wpm).toBe(15);
+  });
+});
+
+describe("createProfileFromProgressCode", () => {
+  it("synthesizes one completed session per day, so the usual storage helpers read it as if completed here", () => {
+    const restored = createProfileFromProgressCode({ n: "Widelene", d: 3, l: "builder" }, "ht", "1234");
+    expect(restored.firstName).toBe("Widelene");
+    expect(restored.language).toBe("ht");
+    expect(restored.pin).toBe("1234");
+    expect(restored.lastLevel).toBe("builder");
+    expect(restored.sessions).toHaveLength(3);
+    expect(getLastCompletedDay(restored)).toBe(3);
+    expect(getStreak(restored)).toBe(3);
+    expect(getEarnedBadges(restored).map((b) => b.day)).toEqual([1, 2, 3]);
+  });
+
+  it("a full 5-day restore reads as week-complete", () => {
+    const restored = createProfileFromProgressCode({ n: "Junior", d: 5, l: "flyer" }, "en", "0000");
+    expect(getWeekSummary(restored)).not.toBeNull();
   });
 });

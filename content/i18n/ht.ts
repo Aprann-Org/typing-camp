@@ -35,6 +35,7 @@ const ht: Strings = {
     done: "Fini",
     yes: "Wi",
     no: "Non",
+    cancel: "Anile",
     timeLabel: "Tan:",
   },
 
@@ -93,6 +94,20 @@ const ht: Strings = {
     pinPlaceholder: "0000",
     pinMustBe4Digits: "Antre tout 4 chif yo.",
     pinIncorrect: "Kòd sa a pa bon. Eseye ankò.",
+    saveCodeButton: "Sove kòd mwen",
+    exportCodeTitle: "Kòd ou",
+    exportCodeSubtitle: "Bay pwofesè ou li, oswa ekri li. Tape li nan yon lòt òdinatè pou pote pwogrè sa a tounen.",
+    copyCodeButton: "Kopye kòd la",
+    codeCopied: "Kopye",
+    haveCodeButton: "Ou gen yon kòd ki soti nan yon lòt òdinatè?",
+    restoreCodeTitle: "Retabli pwogrè ou",
+    restoreCodeSubtitle: "Kole oswa tape kòd ki soti nan lòt òdinatè a.",
+    codePlaceholder: "XXXX XXXX XXXX",
+    codeEmpty: "Tape oswa kole yon kòd anvan.",
+    codeInvalid: "Kòd sa a pa sanble bon — tcheke pou erè epi eseye ankò.",
+    restoreWelcome: "Byenveni tounen, {name}.",
+    restoreDetail: "Jou {day} fini, nivo {level}.",
+    restoreConfirm: "Retabli sa a",
   },
 
   playScreen: {

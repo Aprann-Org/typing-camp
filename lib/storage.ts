@@ -1,6 +1,9 @@
 import type { DayNumber, DeviceSettings, Language, Profile, Session, StorageShape } from "./types";
 import { DEFAULT_LEVEL } from "@/content/levels";
+import { getDayPracticeContent, getCumulativeUnlockedKeys } from "@/content/days";
+import { STAGE_ORDER } from "./session";
 import { createProfileId } from "./id";
+import type { ProgressPayload } from "./progressCode";
 
 // Everything the app persists lives under this single localStorage key.
 // No database, no server, no PII beyond a first name — see the README's
@@ -86,6 +89,57 @@ export function createProfile(firstName: string, language: Language, pin: string
  */
 export function verifyPin(profile: Profile, pin: string): boolean {
   return !profile.pin || profile.pin === pin;
+}
+
+/**
+ * Creates a new profile from a decoded progress code (see lib/progressCode.ts)
+ * — the "bring your progress to a new computer" path. Synthesizes one
+ * completed session per day from 1 through `payload.d`, each with that day's
+ * real badge and the keys taught through that day, so getLastCompletedDay /
+ * getStreak / getEarnedBadges / getWeekSummary all read this profile exactly
+ * as if it had been completed here — EXCEPT per-day performance (WPM,
+ * accuracy, timing), which the code never carried and so comes back as a
+ * fresh start (0 wpm, 100% accuracy, 0 duration) rather than a guess at the
+ * original computer's numbers.
+ */
+export function createProfileFromProgressCode(payload: ProgressPayload, language: Language, pin: string): Profile {
+  const createdAt = new Date().toISOString();
+  const sessions: Session[] = [];
+  for (let day = 1; day <= payload.d; day++) {
+    const dayNumber = day as DayNumber;
+    const dayContent = getDayPracticeContent(dayNumber);
+    if (!dayContent) continue;
+    sessions.push({
+      day: dayNumber,
+      level: payload.l,
+      startedAt: createdAt,
+      completedAt: createdAt,
+      durationSeconds: 0,
+      wpm: 0,
+      accuracy: 1,
+      charsTyped: 0,
+      verseCharsTypedUnassisted: 0,
+      keyErrors: {},
+      keysMastered: Array.from(getCumulativeUnlockedKeys(dayNumber)),
+      badgeEarned: dayContent.badgeId,
+      stagesCompleted: STAGE_ORDER.length - 1,
+    });
+  }
+
+  const profile: Profile = {
+    id: createProfileId(payload.n, createdAt),
+    firstName: payload.n.trim(),
+    language,
+    createdAt,
+    sessions,
+    soundEnabled: false,
+    lastLevel: payload.l,
+    pin,
+  };
+  const storage = readStorage();
+  storage.profiles.push(profile);
+  writeStorage(storage);
+  return profile;
 }
 
 export function updateProfile(updated: Profile): void {

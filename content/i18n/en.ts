@@ -16,6 +16,7 @@ const en = {
     done: "Done",
     yes: "Yes",
     no: "No",
+    cancel: "Cancel",
     timeLabel: "Time:",
   },
 
@@ -65,6 +66,20 @@ const en = {
     pinPlaceholder: "0000",
     pinMustBe4Digits: "Enter all 4 digits.",
     pinIncorrect: "That code isn't right. Try again.",
+    saveCodeButton: "Save my code",
+    exportCodeTitle: "Your code",
+    exportCodeSubtitle: "Give this to your teacher, or write it down. Type it into another computer to bring this progress back.",
+    copyCodeButton: "Copy code",
+    codeCopied: "Copied",
+    haveCodeButton: "Have a code from another computer?",
+    restoreCodeTitle: "Restore your progress",
+    restoreCodeSubtitle: "Paste or type the code from your other computer.",
+    codePlaceholder: "XXXX XXXX XXXX",
+    codeEmpty: "Type or paste a code first.",
+    codeInvalid: "That code doesn't look right — check for typos and try again.",
+    restoreWelcome: "Welcome back, {name}.",
+    restoreDetail: "Day {day} complete, {level} level.",
+    restoreConfirm: "Restore this",
   },
 
   playScreen: {
