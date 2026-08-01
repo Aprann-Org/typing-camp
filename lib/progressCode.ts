@@ -1,6 +1,11 @@
 import type { DayNumber } from "./types";
 import { LEVEL_ORDER, type LevelId } from "@/content/levels";
 
+// Hidden from the UI for now (StartScreen checks this before showing either
+// the "Save my code" or "Have a code?" entry points) — the mechanism itself
+// stays in place and tested, just not offered to children yet.
+export const PROGRESS_CODE_FEATURE_ENABLED = false;
+
 // A human-typeable code carrying just enough of a profile's progress to
 // recreate it on a different computer — built from the same mechanism
 // prototyped and clicked through in the export/import preview artifact.

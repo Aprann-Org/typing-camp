@@ -32,7 +32,7 @@ import styles from "./WordSceneGame.module.css";
 // Day 1's Name Animator is deliberately NOT built on this — it types one
 // target (the child's own name), not a sequence, so it stays standalone.
 
-/** How long the finished picture stays on screen before the stage advances. */
+/** How long the finished picture plays before the "Continue" button appears. */
 const FINISHED_SCENE_HOLD_MS = 2200;
 
 export type SceneRenderProps = {
@@ -76,8 +76,15 @@ export function WordSceneGame({
   onProgress,
   onComplete,
 }: WordSceneGameProps) {
+  const { t } = useI18n();
   const [index, setIndex] = useState(0);
   const accumulated = useRef<StageTypingSummary>(emptySummary());
+  // Set once the finished picture has had its moment (see the hold effect
+  // below) — reveals the Continue button rather than auto-advancing, so the
+  // child (not a timer) decides when to move on. Guards against a double
+  // click firing onComplete twice before the parent has a chance to advance.
+  const [readyToContinue, setReadyToContinue] = useState(false);
+  const [continuePressed, setContinuePressed] = useState(false);
 
   const handleWordFinished = useCallback(
     (summary: StageTypingSummary) => {
@@ -93,19 +100,14 @@ export function WordSceneGame({
 
   const done = index >= words.length;
 
-  // Hold on the finished picture before handing back to the session.
-  // Without this the last keystroke both completes the drawing and advances
-  // the stage in the same frame, so the child never actually sees the thing
-  // they spent the whole game building — the payoff flashes past. Same
-  // reasoning as the Verse Builder's completion flourish.
-  const onCompleteRef = useRef(onComplete);
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-
+  // Hold on the finished picture before offering Continue. Without this the
+  // last keystroke both completes the drawing and reveals the button in the
+  // same frame, so the child never actually sees the thing they spent the
+  // whole game building — the payoff flashes past. Same reasoning as the
+  // Verse Builder's completion flourish.
   useEffect(() => {
     if (!done) return;
-    const id = setTimeout(() => onCompleteRef.current(accumulated.current), FINISHED_SCENE_HOLD_MS);
+    const id = setTimeout(() => setReadyToContinue(true), FINISHED_SCENE_HOLD_MS);
     return () => clearTimeout(id);
   }, [done]);
 
@@ -125,6 +127,18 @@ export function WordSceneGame({
           errorHandling={errorHandling}
           onFinished={handleWordFinished}
         />
+      )}
+      {readyToContinue && (
+        <button
+          className="btn-primary px-8 py-3 text-lg"
+          disabled={continuePressed}
+          onClick={() => {
+            setContinuePressed(true);
+            onComplete(accumulated.current);
+          }}
+        >
+          {t("common.continue")}
+        </button>
       )}
     </div>
   );

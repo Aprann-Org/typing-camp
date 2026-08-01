@@ -12,7 +12,8 @@ import styles from "./NinjaFlightGame.module.css";
 
 // A bonus game, not tied to any day's curriculum theme — see PlayScreen,
 // which offers it once at least one day is done, and bonusLetters.ts for why
-// its letter pool is the full alphabet rather than just what's unlocked so far.
+// its letter pool is the full (lowercase-only) curriculum alphabet rather
+// than just what's unlocked so far.
 //
 // THE NINJA NEVER FALLS. Same rule as Day 4's eagle (see SoarGame's own
 // comment) — a miss just doesn't advance the ninja; it never knocks them
@@ -25,10 +26,13 @@ import styles from "./NinjaFlightGame.module.css";
 // one piece of a picture in the other games.
 const SEQUENCE_LENGTH = 10;
 
-function NinjaScene({ revealed, total }: SceneRenderProps) {
+type NinjaSceneProps = SceneRenderProps & { sequence: string[] };
+
+function NinjaScene({ revealed, total, sequence }: NinjaSceneProps) {
   const progress = total === 0 ? 0 : revealed / total;
   const ninjaX = 24 + progress * 250;
-  const ninjaColor = colorFor(String.fromCharCode(97 + (revealed % 26)));
+  const currentLetter = sequence[Math.min(revealed, sequence.length - 1)] ?? "a";
+  const ninjaColor = colorFor(currentLetter);
 
   return (
     <svg viewBox="0 0 300 160" role="img" aria-label="A ninja hopping across platforms toward a goal flag">
@@ -109,7 +113,7 @@ export function NinjaFlightGame({ unlockedChars, shiftUnlocked, errorHandling, o
         onProgress={(fraction) => {
           if (fraction >= 1) setFinished(true);
         }}
-        renderScene={(props) => <NinjaScene {...props} />}
+        renderScene={(props) => <NinjaScene {...props} sequence={sequence} />}
         onComplete={onComplete}
       />
     </div>

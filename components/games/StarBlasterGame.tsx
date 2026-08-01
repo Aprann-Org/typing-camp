@@ -42,10 +42,13 @@ function Star({ x, y, popped }: { x: number; y: number; popped: boolean }) {
   );
 }
 
-function BlasterScene({ revealed, total }: SceneRenderProps) {
+type BlasterSceneProps = SceneRenderProps & { sequence: string[] };
+
+function BlasterScene({ revealed, total, sequence }: BlasterSceneProps) {
   const stars = Array.from({ length: total }, (_, i) => starPosition(i, total));
   const lastHit = revealed > 0 ? stars[revealed - 1] : null;
-  const cannonColor = colorFor(String.fromCharCode(97 + (revealed % 26)));
+  const currentLetter = sequence[Math.min(revealed, sequence.length - 1)] ?? "a";
+  const cannonColor = colorFor(currentLetter);
 
   return (
     <svg viewBox="0 0 300 200" role="img" aria-label="A cannon blasting stars out of the sky, one per letter">
@@ -110,7 +113,7 @@ export function StarBlasterGame({ unlockedChars, shiftUnlocked, errorHandling, o
         onProgress={(fraction) => {
           if (fraction >= 1) setFinished(true);
         }}
-        renderScene={(props) => <BlasterScene {...props} />}
+        renderScene={(props) => <BlasterScene {...props} sequence={sequence} />}
         onComplete={onComplete}
       />
     </div>

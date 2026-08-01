@@ -28,10 +28,13 @@ function waypoint(i: number, total: number) {
   return { x, y: ROW_Y[row] };
 }
 
-function MazeScene({ revealed, total }: SceneRenderProps) {
+type MazeSceneProps = SceneRenderProps & { sequence: string[] };
+
+function MazeScene({ revealed, total, sequence }: MazeSceneProps) {
   const points = Array.from({ length: total }, (_, i) => waypoint(i, total));
   const current = points[Math.min(revealed, points.length - 1)] ?? { x: 30, y: ROW_Y[0] };
-  const explorerColor = colorFor(String.fromCharCode(97 + (revealed % 26)));
+  const currentLetter = sequence[Math.min(revealed, sequence.length - 1)] ?? "a";
+  const explorerColor = colorFor(currentLetter);
 
   const toPolyline = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x},${p.y}`).join(" ");
   const traveled = points.slice(0, Math.max(1, revealed + 1));
@@ -128,7 +131,7 @@ export function MazeGame({ unlockedChars, shiftUnlocked, errorHandling, onComple
         onProgress={(fraction) => {
           if (fraction >= 1) setFinished(true);
         }}
-        renderScene={(props) => <MazeScene {...props} />}
+        renderScene={(props) => <MazeScene {...props} sequence={sequence} />}
         onComplete={onComplete}
       />
     </div>

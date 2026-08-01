@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTypingSession } from "@/lib/useTypingSession";
 import { buildLockedKeyConfig, getFingerForChar } from "@/content/layouts";
 import { FINGERS, THUMB_COLOR } from "@/content/fingers";
@@ -28,6 +28,9 @@ function colorFor(char: string): string {
   return finger === "thumb" ? THUMB_COLOR : FINGERS[finger].hex;
 }
 
+/** How long the finished name plays before the "Continue" button appears — mirrors WordSceneGame's identical hold. */
+const FINISHED_HOLD_MS = 2200;
+
 // Day 1's game: the child's own name renders large, and each correct
 // keystroke makes that letter bounce, change color, and hold — mirroring
 // the Day 1 Scratch project. Guided mode, since most names need locked
@@ -36,6 +39,13 @@ function colorFor(char: string): string {
 export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, errorHandling, onProgress, onComplete }: NameAnimatorGameProps) {
   const { t } = useI18n();
   const { soundEnabled } = useAppSettings();
+  // Set once the name is fully typed, so the finished animation gets its
+  // moment before Continue appears — same reasoning as WordSceneGame's hold:
+  // without it the last keystroke and the stage advance land in the same
+  // frame, and the child never actually sees their own name land.
+  const [finishedSummary, setFinishedSummary] = useState<StageTypingSummary | null>(null);
+  const [readyToContinue, setReadyToContinue] = useState(false);
+  const [continuePressed, setContinuePressed] = useState(false);
 
   const locked = useMemo(
     () => buildLockedKeyConfig(firstName, unlockedChars, shiftUnlocked, "guided"),
@@ -47,7 +57,7 @@ export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, erro
     locked,
     errorHandling,
     soundEnabled,
-    onComplete: (finalState: TypingState) => onComplete(summarizeTypingState(finalState)),
+    onComplete: (finalState: TypingState) => setFinishedSummary(summarizeTypingState(finalState)),
   });
 
   const focusProps = useTypingInputFocus(inputRef);
@@ -55,6 +65,12 @@ export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, erro
   useEffect(() => {
     if (state.slots.length > 0) onProgress?.(state.index / state.slots.length);
   }, [state.index, state.slots.length, onProgress]);
+
+  useEffect(() => {
+    if (!finishedSummary) return;
+    const id = setTimeout(() => setReadyToContinue(true), FINISHED_HOLD_MS);
+    return () => clearTimeout(id);
+  }, [finishedSummary]);
 
   const currentChar = !state.finished ? state.slots[state.index]?.char : undefined;
   const currentFinger = currentChar !== undefined ? getFingerForChar(currentChar) : null;
@@ -95,6 +111,18 @@ export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, erro
           key the child hasn't been taught yet, so the hand map is the
           instruction, not a hint that can be withheld by level. */}
       {currentFinger && <HandMap activeFinger={currentFinger} activeLabel={t(`fingerNames.${currentFinger}`)} />}
+      {readyToContinue && finishedSummary && (
+        <button
+          className="btn-primary px-8 py-3 text-lg"
+          disabled={continuePressed}
+          onClick={() => {
+            setContinuePressed(true);
+            onComplete(finishedSummary);
+          }}
+        >
+          {t("common.continue")}
+        </button>
+      )}
     </div>
   );
 }

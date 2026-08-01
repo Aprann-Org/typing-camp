@@ -13,7 +13,7 @@ import {
   getLastCompletedDay,
   getWeekSummary,
 } from "@/lib/storage";
-import { encodeProgressCode, decodeProgressCode, type ProgressPayload } from "@/lib/progressCode";
+import { encodeProgressCode, decodeProgressCode, PROGRESS_CODE_FEATURE_ENABLED, type ProgressPayload } from "@/lib/progressCode";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useI18n } from "@/context/I18nContext";
 import { Mascot } from "@/components/Mascot";
@@ -235,9 +235,10 @@ export function StartScreen({ onStart, onPlay, onViewWeekSummary }: StartScreenP
 
   if (step === "pickSession" && resolvedProfile) {
     const lastCompletedDay = getLastCompletedDay(resolvedProfile);
-    const exportCode = lastCompletedDay
-      ? encodeProgressCode(resolvedProfile.firstName, lastCompletedDay, resolvedProfile.lastLevel)
-      : null;
+    const exportCode =
+      PROGRESS_CODE_FEATURE_ENABLED && lastCompletedDay
+        ? encodeProgressCode(resolvedProfile.firstName, lastCompletedDay, resolvedProfile.lastLevel)
+        : null;
 
     return (
       <ScreenShell language={language} setLanguage={setLanguage} t={t}>
@@ -393,67 +394,69 @@ export function StartScreen({ onStart, onPlay, onViewWeekSummary }: StartScreenP
           </div>
         )}
 
-        <div className="flex w-full flex-col items-center gap-3">
-          <button
-            className="font-[family-name:var(--font-ui)] text-sm text-foreground-muted underline decoration-1 underline-offset-2 hover:text-foreground"
-            onClick={() => setShowImportPanel((open) => !open)}
-          >
-            {t("startScreen.haveCodeButton")}
-          </button>
+        {PROGRESS_CODE_FEATURE_ENABLED && (
+          <div className="flex w-full flex-col items-center gap-3">
+            <button
+              className="font-[family-name:var(--font-ui)] text-sm text-foreground-muted underline decoration-1 underline-offset-2 hover:text-foreground"
+              onClick={() => setShowImportPanel((open) => !open)}
+            >
+              {t("startScreen.haveCodeButton")}
+            </button>
 
-          {showImportPanel && (
-            <div className="flex w-full flex-col items-center gap-2 text-center">
-              <p className="font-[family-name:var(--font-ui)] text-sm font-semibold text-foreground">
-                {t("startScreen.restoreCodeTitle")}
-              </p>
-              <p className="font-[family-name:var(--font-ui)] text-xs text-foreground-muted">
-                {t("startScreen.restoreCodeSubtitle")}
-              </p>
-              <input
-                className="w-full rounded-xl border border-border-subtle bg-background-raised px-4 py-3 text-center font-[family-name:var(--font-typing)] text-lg uppercase tracking-wider text-foreground outline-none"
-                placeholder={t("startScreen.codePlaceholder")}
-                value={codeInput}
-                onChange={(e) => {
-                  setCodeInput(e.target.value);
-                  setCodePreview(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleRestoreCode();
-                }}
-                aria-label="Progress code"
-              />
-              {codeError && <p className="font-[family-name:var(--font-ui)] text-sm text-[var(--finger-right-middle)]">{codeError}</p>}
+            {showImportPanel && (
+              <div className="flex w-full flex-col items-center gap-2 text-center">
+                <p className="font-[family-name:var(--font-ui)] text-sm font-semibold text-foreground">
+                  {t("startScreen.restoreCodeTitle")}
+                </p>
+                <p className="font-[family-name:var(--font-ui)] text-xs text-foreground-muted">
+                  {t("startScreen.restoreCodeSubtitle")}
+                </p>
+                <input
+                  className="w-full rounded-xl border border-border-subtle bg-background-raised px-4 py-3 text-center font-[family-name:var(--font-typing)] text-lg uppercase tracking-wider text-foreground outline-none"
+                  placeholder={t("startScreen.codePlaceholder")}
+                  value={codeInput}
+                  onChange={(e) => {
+                    setCodeInput(e.target.value);
+                    setCodePreview(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleRestoreCode();
+                  }}
+                  aria-label="Progress code"
+                />
+                {codeError && <p className="font-[family-name:var(--font-ui)] text-sm text-[var(--finger-right-middle)]">{codeError}</p>}
 
-              {codePreview ? (
-                <div className="flex w-full flex-col gap-3 rounded-xl border border-border-subtle bg-background-raised p-4 text-left">
-                  <div>
-                    <p className="font-[family-name:var(--font-ui)] text-sm font-semibold text-foreground">
-                      {t("startScreen.restoreWelcome", { name: codePreview.n })}
-                    </p>
-                    <p className="font-[family-name:var(--font-ui)] text-xs text-foreground-muted">
-                      {t("startScreen.restoreDetail", { day: codePreview.d, level: t(`levels.${codePreview.l}.name`) })}
-                    </p>
+                {codePreview ? (
+                  <div className="flex w-full flex-col gap-3 rounded-xl border border-border-subtle bg-background-raised p-4 text-left">
+                    <div>
+                      <p className="font-[family-name:var(--font-ui)] text-sm font-semibold text-foreground">
+                        {t("startScreen.restoreWelcome", { name: codePreview.n })}
+                      </p>
+                      <p className="font-[family-name:var(--font-ui)] text-xs text-foreground-muted">
+                        {t("startScreen.restoreDetail", { day: codePreview.d, level: t(`levels.${codePreview.l}.name`) })}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="btn-primary flex-1 px-4 py-2 text-sm"
+                        onClick={() => startPinCreationFromRestore(codePreview)}
+                      >
+                        {t("startScreen.restoreConfirm")}
+                      </button>
+                      <button className="btn-secondary flex-1 px-4 py-2 text-sm" onClick={() => setCodePreview(null)}>
+                        {t("common.cancel")}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      className="btn-primary flex-1 px-4 py-2 text-sm"
-                      onClick={() => startPinCreationFromRestore(codePreview)}
-                    >
-                      {t("startScreen.restoreConfirm")}
-                    </button>
-                    <button className="btn-secondary flex-1 px-4 py-2 text-sm" onClick={() => setCodePreview(null)}>
-                      {t("common.cancel")}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button className="btn-primary w-full px-6 py-2" onClick={handleRestoreCode}>
-                  {t("common.continue")}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+                ) : (
+                  <button className="btn-primary w-full px-6 py-2" onClick={handleRestoreCode}>
+                    {t("common.continue")}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </ScreenShell>
   );

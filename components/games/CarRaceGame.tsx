@@ -21,10 +21,13 @@ const SEQUENCE_LENGTH = 10;
 /** The road's vertical center — everything drawn relative to y=0 in local sprite coordinates lands here. */
 const ROAD_Y = 151;
 
-function CarScene({ revealed, total }: SceneRenderProps) {
+type CarSceneProps = SceneRenderProps & { sequence: string[] };
+
+function CarScene({ revealed, total, sequence }: CarSceneProps) {
   const progress = total === 0 ? 0 : revealed / total;
   const carX = 30 + progress * 224;
-  const carColor = colorFor(String.fromCharCode(97 + (revealed % 26)));
+  const currentLetter = sequence[Math.min(revealed, sequence.length - 1)] ?? "a";
+  const carColor = colorFor(currentLetter);
   const finished = total > 0 && revealed >= total;
 
   return (
@@ -107,7 +110,7 @@ export function CarRaceGame({ unlockedChars, shiftUnlocked, errorHandling, onCom
         onProgress={(fraction) => {
           if (fraction >= 1) setFinished(true);
         }}
-        renderScene={(props) => <CarScene {...props} />}
+        renderScene={(props) => <CarScene {...props} sequence={sequence} />}
         onComplete={onComplete}
       />
     </div>

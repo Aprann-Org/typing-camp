@@ -120,7 +120,7 @@ const ht: Strings = {
     backButton: "Tounen",
     bonusGamesLabel: "Jwèt bonis",
     ninjaGameLabel: "Ninja k ap sote",
-    mazeGameLabel: "Laberent",
+    mazeGameLabel: "Labirent",
     starBlasterGameLabel: "Kanon zetwal",
     carRaceGameLabel: "Kous machin",
   },
