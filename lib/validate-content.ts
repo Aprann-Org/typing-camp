@@ -4,7 +4,7 @@ import {
   getDayPracticeContent,
   isShiftUnlocked,
 } from "@/content/days";
-import { getKeyForChar } from "@/content/layouts";
+import { getKeyForChar, isCharUnlocked, requiresShift } from "@/content/layouts";
 import type { DayNumber, Language } from "./types";
 
 // The build-time content guardrail. Everything here is a rule that TypeScript
@@ -31,22 +31,16 @@ function charsWithNoKey(text: string): string[] {
   return [...new Set([...text])].filter((ch) => getKeyForChar(ch) === undefined);
 }
 
-/** Whether every character of `text` can be typed by a child on `day`. */
+/**
+ * Whether every character of `text` can be typed by a child on `day`. Defers
+ * to the engine's own isCharUnlocked rather than restating the shifted-form
+ * rule — a second copy here once meant the validator could pass content the
+ * app then refused to accept.
+ */
 function untypeableChars(text: string, day: DayNumber): string[] {
   const unlocked = getCumulativeUnlockedKeys(day);
   const shiftOk = isShiftUnlocked(day);
-  const bad: string[] = [];
-  for (const ch of new Set([...text])) {
-    const key = getKeyForChar(ch);
-    if (!key) {
-      bad.push(ch);
-      continue;
-    }
-    const isShiftedForm = !!key.shiftChar && key.shiftChar === ch;
-    const ok = isShiftedForm ? shiftOk && unlocked.has(key.char) : unlocked.has(ch);
-    if (!ok) bad.push(ch);
-  }
-  return bad;
+  return [...new Set([...text])].filter((ch) => !isCharUnlocked(ch, unlocked, shiftOk));
 }
 
 function countTypeable(text: string, day: DayNumber): number {
@@ -146,6 +140,14 @@ export function validateContent(): ContentProblem[] {
       }
     }
 
+    // The Shift day's whole reason for existing is that capitals become
+    // possible — if its word bank has none, the child drills a chord and then
+    // never uses it, which is exactly the "chore" framing the day is built to
+    // avoid.
+    if (content.teachesShift && !content.wordBank.some((word) => [...word].some((ch) => requiresShift(ch)))) {
+      add(day, "wordBank", "day teaches Shift but no word in the bank needs a capital");
+    }
+
     const previousBadgeDay = badgeIds.get(content.badgeId);
     if (previousBadgeDay !== undefined) {
       add(day, "badgeId", `"${content.badgeId}" is already used by day ${previousBadgeDay}`);
@@ -178,6 +180,20 @@ export function validateContent(): ContentProblem[] {
         add(day, "verse", `verse should be fully typeable by day ${target} but still needs ${bad.map((c) => `"${c}"`).join(", ")}`);
       }
     }
+  }
+
+  // --- Shift is taught exactly once ---------------------------------------
+  // isShiftUnlocked derives from this flag, so zero days means capitals are
+  // never typeable all week and two days means the second declaration is dead.
+  const shiftDays = ALL_DAYS.filter((d) => getDayPracticeContent(d)?.teachesShift);
+  if (shiftDays.length !== 1) {
+    add(
+      null,
+      "teachesShift",
+      shiftDays.length === 0
+        ? "no day declares teachesShift, so Shift is never taught"
+        : `teachesShift is declared on days ${shiftDays.join(", ")} — it must be exactly one`
+    );
   }
 
   // --- Ladder completeness ------------------------------------------------

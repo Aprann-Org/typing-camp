@@ -10,16 +10,17 @@ import {
   type TypingState,
 } from "./typing-engine";
 import type { ErrorHandlingMode } from "@/content/levels";
+import { DEFAULT_LAYOUT, type LayoutId } from "@/content/layouts";
 import { calculateWpm } from "./wpm";
 import { playCompleteChime, playCorrectTone, playIncorrectTone } from "./sound";
 
 type Action = { type: "key"; char: string } | { type: "backspace" } | { type: "reset"; target: string };
 
-function makeReducer(locked: LockedKeyConfig, errorHandling: ErrorHandlingMode) {
+function makeReducer(locked: LockedKeyConfig, errorHandling: ErrorHandlingMode, layoutId: LayoutId) {
   return function reducer(state: TypingState, action: Action): TypingState {
     switch (action.type) {
       case "key":
-        return processKeystroke(state, action.char, locked, errorHandling);
+        return processKeystroke(state, action.char, locked, errorHandling, layoutId);
       case "backspace":
         return processBackspace(state);
       case "reset":
@@ -38,6 +39,7 @@ export type UseTypingSessionOptions = {
    */
   locked: LockedKeyConfig;
   errorHandling: ErrorHandlingMode;
+  layoutId?: LayoutId;
   soundEnabled?: boolean;
   onComplete?: (state: TypingState) => void;
 };
@@ -53,12 +55,21 @@ export function useTypingSession({
   target,
   locked,
   errorHandling,
+  layoutId = DEFAULT_LAYOUT,
   soundEnabled = false,
   onComplete,
 }: UseTypingSessionOptions) {
-  const reducer = useMemo(() => makeReducer(locked, errorHandling), [locked, errorHandling]);
+  const reducer = useMemo(
+    () => makeReducer(locked, errorHandling, layoutId),
+    [locked, errorHandling, layoutId]
+  );
   const [state, dispatch] = useReducer(reducer, undefined, () => createTypingState(target, locked));
   const [wpm, setWpm] = useState(0);
+  // Live modifier state. Presentation only — it drives the on-screen Shift
+  // glow and the Caps Lock warning, and never reaches the pure engine (which
+  // only ever knows about characters). Kept out of the reducer for the same
+  // reason as wpm and comboRef below.
+  const [modifiers, setModifiers] = useState({ shiftHeld: false, capsLock: false });
   const completedRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const onCompleteRef = useRef(onComplete);
@@ -137,18 +148,58 @@ export function useTypingSession({
     return () => clearInterval(id);
   }, [state.startedAt, state.finished, state.correctCount]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key === "Backspace") {
-      dispatch({ type: "backspace" });
-      e.preventDefault();
-      return;
-    }
-    if (e.key.length === 1) {
-      dispatch({ type: "key", char: e.key });
-      e.preventDefault();
-    }
+  // Bails out of the render when nothing actually changed (returning `prev`
+  // from a setter is a no-op in React), so the common case — an ordinary
+  // keystroke with no modifier transition — costs nothing. That matters here:
+  // this runs in the same handler as the keystroke dispatch, which the 60ms
+  // feedback flash depends on.
+  const syncModifiers = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    const shiftHeld = e.shiftKey;
+    const capsLock = e.getModifierState("CapsLock");
+    setModifiers((prev) =>
+      prev.shiftHeld === shiftHeld && prev.capsLock === capsLock ? prev : { shiftHeld, capsLock }
+    );
   }, []);
 
-  return { state, wpm, accuracy: calculateAccuracy(state), handleKeyDown, inputRef };
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      syncModifiers(e);
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "Backspace") {
+        dispatch({ type: "backspace" });
+        e.preventDefault();
+        return;
+      }
+      if (e.key.length === 1) {
+        dispatch({ type: "key", char: e.key });
+        e.preventDefault();
+      }
+      // Shift itself (e.key === "Shift", length 5) falls through: the hold is
+      // recorded above, and there is no character to dispatch.
+    },
+    [syncModifiers]
+  );
+
+  const handleKeyUp = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => syncModifiers(e),
+    [syncModifiers]
+  );
+
+  // A Shift keyup lost to a window switch (alt-tab while holding) would never
+  // arrive, leaving the on-screen key stuck down.
+  const handleBlur = useCallback(() => {
+    setModifiers((prev) => (prev.shiftHeld ? { ...prev, shiftHeld: false } : prev));
+  }, []);
+
+  return {
+    state,
+    wpm,
+    accuracy: calculateAccuracy(state),
+    handleKeyDown,
+    handleKeyUp,
+    handleBlur,
+    shiftHeld: modifiers.shiftHeld,
+    capsLock: modifiers.capsLock,
+    inputRef,
+  };
 }

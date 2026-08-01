@@ -9,9 +9,14 @@ export type Session = {
   startedAt: string;
   completedAt: string | null;
   durationSeconds: number;
+  /** Of `durationSeconds`, the part actually spent typing — see StageTypingSummary.activeMs. */
+  activeSeconds: number;
+  /** Over active typing time, not wall-clock. */
   wpm: number;
   /** 0-1. Excludes guided-mode (locked-key) characters. */
   accuracy: number;
+  /** The day's comparable score, 0-1000. Same number the report screen shows. */
+  score: number;
   charsTyped: number;
   verseCharsTypedUnassisted: number;
   /** Per-key miss counts, keyed by the character that was missed. */
@@ -31,16 +36,6 @@ export type Profile = {
   // "schema deviations" section for why these are per-profile.
   soundEnabled: boolean;
   lastLevel: LevelId;
-  /**
-   * A 4-digit code the child sets when their profile is created, asked for
-   * again whenever that name is picked from the shared machine's profile
-   * list — just enough to stop another kid on the same device from opening
-   * someone else's progress by tapping their name, not real account
-   * security (there's no server, no password hashing; see lib/storage.ts's
-   * verifyPin). Optional so profiles created before this feature existed
-   * still open with no PIN prompt at all.
-   */
-  pin?: string;
 };
 
 export type DeviceSettings = {
@@ -92,6 +87,13 @@ export type DayPracticeContent = {
    * keys to need splitting.
    */
   newKeyGroups?: string[][];
+  /**
+   * The day Shift (and so capitals) is taught. Exactly one day in the week
+   * sets this — content/days/index.ts's isShiftUnlocked derives from it, and
+   * the New Keys stage appends a Shift checkpoint on this day. Not a member of
+   * `newKeys` because Shift produces no character of its own.
+   */
+  teachesShift?: true;
   drills: DrillSpec[];
   /** Unlocked keys only — validated at build by scripts/validate-content.ts. */
   wordBank: string[];

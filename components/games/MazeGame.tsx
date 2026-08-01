@@ -55,7 +55,7 @@ function MazeScene({ revealed, total, sequence }: MazeSceneProps) {
       )}
 
       {/* The traveled portion, overlaid in the same accent every other bonus
-          game uses for "done so far" (see NinjaFlightGame/WeekSummaryStage). */}
+          game uses for "done so far" (see NinjaFlightGame). */}
       {traveled.length > 1 && (
         <polyline
           points={toPolyline(traveled)}

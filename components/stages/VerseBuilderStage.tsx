@@ -12,14 +12,11 @@ import { useAppSettings } from "@/context/AppSettingsContext";
 import { useTypingInputFocus } from "@/context/OverlayContext";
 import styles from "./VerseBuilderStage.module.css";
 
-type PriorProgress = { day: number; charsTypedUnassisted: number } | null;
-
 type VerseBuilderStageProps = {
   dayContent: DayPracticeContent;
   level: LevelConfig;
   unlockedChars: ReadonlySet<string>;
   shiftUnlocked: boolean;
-  priorProgress: PriorProgress;
   /** Reports fraction of the verse typed (0-1) for the journey stepper. */
   onProgress?: (fraction: number) => void;
   onComplete: (summary: StageTypingSummary, verseCharsTypedUnassisted: number) => void;
@@ -43,7 +40,6 @@ export function VerseBuilderStage({
   level,
   unlockedChars,
   shiftUnlocked,
-  priorProgress,
   onProgress,
   onComplete,
 }: VerseBuilderStageProps) {
@@ -147,17 +143,10 @@ export function VerseBuilderStage({
         ))}
       </div>
 
-      {completing && (
-        <p className={styles.comparison}>
-          {priorProgress
-            ? t("stages.verseBuilder.comparisonLine", {
-                day: priorProgress.day,
-                previous: priorProgress.charsTypedUnassisted,
-                current: finalCount,
-              })
-            : t("stages.verseBuilder.firstTimeLine", { current: finalCount })}
-        </p>
-      )}
+      {/* Today's count only. The old day-over-day line ("Day 1 you typed 14,
+          today 38") needed a profile that survived to the next day, which
+          nothing here can promise — see docs/profile-recovery-plan.md. */}
+      {completing && <p className={styles.comparison}>{t("stages.verseBuilder.firstTimeLine", { current: finalCount })}</p>}
     </div>
   );
 }

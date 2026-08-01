@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTypingSession } from "@/lib/useTypingSession";
-import { buildLockedKeyConfig, getFingerForChar } from "@/content/layouts";
+import { buildLockedKeyConfig, getFingerForChar, getShiftFingerForChar } from "@/content/layouts";
 import { FINGERS, THUMB_COLOR } from "@/content/fingers";
 import { summarizeTypingState, type StageTypingSummary, type TypingState } from "@/lib/typing-engine";
 import type { ErrorHandlingMode } from "@/content/levels";
@@ -74,6 +74,9 @@ export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, erro
 
   const currentChar = !state.finished ? state.slots[state.index]?.char : undefined;
   const currentFinger = currentChar !== undefined ? getFingerForChar(currentChar) : null;
+  // A child's own name is the most likely place in the whole app to meet a
+  // capital before Day 4, so the chord hint matters most here.
+  const shiftFinger = currentChar !== undefined ? getShiftFingerForChar(currentChar) : null;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -110,7 +113,17 @@ export function NameAnimatorGame({ firstName, unlockedChars, shiftUnlocked, erro
       {/* Always show the finger here — nearly every letter of a name is a
           key the child hasn't been taught yet, so the hand map is the
           instruction, not a hint that can be withheld by level. */}
-      {currentFinger && <HandMap activeFinger={currentFinger} activeLabel={t(`fingerNames.${currentFinger}`)} />}
+      {currentFinger && (
+        <HandMap
+          activeFinger={currentFinger}
+          holdFinger={shiftFinger}
+          activeLabel={
+            shiftFinger !== null && currentChar !== undefined
+              ? t("typing.shiftHint", { finger: t(`fingerNames.${shiftFinger}`), char: currentChar })
+              : t(`fingerNames.${currentFinger}`)
+          }
+        />
+      )}
       {readyToContinue && finishedSummary && (
         <button
           className="btn-primary px-8 py-3 text-lg"

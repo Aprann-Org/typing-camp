@@ -2,8 +2,15 @@ import { FINGERS, THUMB_COLOR, type FingerId } from "@/content/fingers";
 import styles from "./HandMap.module.css";
 
 type HandMapProps = {
-  /** The finger the child should use right now, or null/undefined for none. */
+  /** The finger the child should PRESS with right now, or null/undefined for none. */
   activeFinger?: FingerId | "thumb" | null;
+  /**
+   * A finger the child should HOLD DOWN while pressing `activeFinger` — the
+   * pinky on Shift. Drawn with a sustained glow rather than the press bounce,
+   * because holding and tapping are different physical actions and shouldn't
+   * look alike.
+   */
+  holdFinger?: FingerId | null;
   /** Pre-translated label shown under the hands, e.g. "left index finger". */
   activeLabel?: string;
 };
@@ -40,16 +47,23 @@ function HandSvg({
   mirrored,
   slotToFinger,
   activeFinger,
+  holdFinger,
 }: {
   mirrored: boolean;
   slotToFinger: Record<DigitSlot, FingerId | "thumb">;
   activeFinger: FingerId | "thumb" | null | undefined;
+  holdFinger: FingerId | null | undefined;
 }) {
+  const isActive = (slot: DigitSlot) => slotToFinger[slot] === activeFinger;
+  const isHold = (slot: DigitSlot) => slotToFinger[slot] === holdFinger;
   const fill = (slot: DigitSlot) => {
     const finger = slotToFinger[slot];
-    return finger === activeFinger ? colorFor(finger) : undefined;
+    return isActive(slot) || isHold(slot) ? colorFor(finger) : undefined;
   };
-  const isActive = (slot: DigitSlot) => slotToFinger[slot] === activeFinger;
+  const cls = (slot: DigitSlot) =>
+    [styles.digit, isActive(slot) ? styles.digitActive : "", isHold(slot) ? styles.digitHold : ""]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <svg
@@ -60,28 +74,12 @@ function HandSvg({
       aria-hidden="true"
     >
       <rect className={styles.digit} x="15" y="95" width="90" height="65" rx="28" />
+      <rect className={cls("pinky")} x="12" y="45" width="16" height="55" rx="8" style={{ fill: fill("pinky") }} />
+      <rect className={cls("ring")} x="36" y="25" width="16" height="75" rx="8" style={{ fill: fill("ring") }} />
+      <rect className={cls("middle")} x="60" y="15" width="16" height="85" rx="8" style={{ fill: fill("middle") }} />
+      <rect className={cls("index")} x="84" y="30" width="16" height="70" rx="8" style={{ fill: fill("index") }} />
       <rect
-        className={`${styles.digit} ${isActive("pinky") ? styles.digitActive : ""}`}
-        x="12" y="45" width="16" height="55" rx="8"
-        style={{ fill: fill("pinky") }}
-      />
-      <rect
-        className={`${styles.digit} ${isActive("ring") ? styles.digitActive : ""}`}
-        x="36" y="25" width="16" height="75" rx="8"
-        style={{ fill: fill("ring") }}
-      />
-      <rect
-        className={`${styles.digit} ${isActive("middle") ? styles.digitActive : ""}`}
-        x="60" y="15" width="16" height="85" rx="8"
-        style={{ fill: fill("middle") }}
-      />
-      <rect
-        className={`${styles.digit} ${isActive("index") ? styles.digitActive : ""}`}
-        x="84" y="30" width="16" height="70" rx="8"
-        style={{ fill: fill("index") }}
-      />
-      <rect
-        className={`${styles.digit} ${isActive("thumb") ? styles.digitActive : ""}`}
+        className={cls("thumb")}
         x="95" y="100" width="40" height="18" rx="9"
         transform="rotate(35 95 100)"
         style={{ fill: fill("thumb") }}
@@ -90,12 +88,22 @@ function HandSvg({
   );
 }
 
-export function HandMap({ activeFinger = null, activeLabel }: HandMapProps) {
+export function HandMap({ activeFinger = null, holdFinger = null, activeLabel }: HandMapProps) {
   return (
     <div className={styles.wrap}>
       <div className={styles.hands}>
-        <HandSvg mirrored={false} slotToFinger={LEFT_SLOT_TO_FINGER} activeFinger={activeFinger} />
-        <HandSvg mirrored={true} slotToFinger={RIGHT_SLOT_TO_FINGER} activeFinger={activeFinger} />
+        <HandSvg
+          mirrored={false}
+          slotToFinger={LEFT_SLOT_TO_FINGER}
+          activeFinger={activeFinger}
+          holdFinger={holdFinger}
+        />
+        <HandSvg
+          mirrored={true}
+          slotToFinger={RIGHT_SLOT_TO_FINGER}
+          activeFinger={activeFinger}
+          holdFinger={holdFinger}
+        />
       </div>
       <div className={styles.label}>{activeLabel}</div>
     </div>

@@ -91,6 +91,7 @@ export function ThemeChallengeStage({ targets, level, unlockedChars, shiftUnlock
         target={target}
         locked={locked}
         unlockedChars={unlockedChars}
+        shiftUnlocked={shiftUnlocked}
         errorHandling={level.errorHandling}
         fingerHint={level.fingerHint}
         onComplete={handleComplete}

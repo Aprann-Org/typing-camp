@@ -11,6 +11,10 @@ type TypingSlotsProps = {
   state: TypingState;
   inputRef: RefObject<HTMLInputElement | null>;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  /** Needed to see a modifier being RELEASED — keydown alone can't tell. */
+  onKeyUp?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  /** Clears held-modifier state when focus is genuinely lost (see handleBlur). */
+  onBlur?: () => void;
   layoutId?: LayoutId;
 };
 
@@ -38,7 +42,7 @@ function colorForChar(char: string, layoutId: LayoutId): string | undefined {
   return finger === "thumb" ? THUMB_COLOR : FINGERS[finger].hex;
 }
 
-export function TypingSlots({ state, inputRef, onKeyDown, layoutId = DEFAULT_LAYOUT }: TypingSlotsProps) {
+export function TypingSlots({ state, inputRef, onKeyDown, onKeyUp, onBlur, layoutId = DEFAULT_LAYOUT }: TypingSlotsProps) {
   const { t } = useI18n();
   const focusProps = useTypingInputFocus(inputRef);
   const [streak, setStreak] = useState(0);
@@ -101,7 +105,15 @@ export function TypingSlots({ state, inputRef, onKeyDown, layoutId = DEFAULT_LAY
           ref={inputRef}
           className={styles.hiddenInput}
           onKeyDown={onKeyDown}
+          onKeyUp={onKeyUp}
           {...focusProps}
+          // Composed rather than overridden: focusProps.onBlur is what keeps
+          // the hidden input focused, so replacing it would break every
+          // keystroke.
+          onBlur={(e) => {
+            focusProps.onBlur(e);
+            onBlur?.();
+          }}
           autoFocus
           aria-label="Typing input"
         />

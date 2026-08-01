@@ -12,6 +12,7 @@ type WordBuildStageProps = {
   dayContent: DayPracticeContent;
   level: LevelConfig;
   unlockedChars: ReadonlySet<string>;
+  shiftUnlocked: boolean;
   /** Keys not explicitly drilled this session at Starter level — typed as helper keys here, not scored. */
   guidedOnlyKeys: ReadonlySet<string>;
   /** Reports word-queue position (0-1) for the journey stepper. */
@@ -28,7 +29,15 @@ function shuffled(words: string[]): string[] {
   return copy;
 }
 
-export function WordBuildStage({ dayContent, level, unlockedChars, guidedOnlyKeys, onProgress, onComplete }: WordBuildStageProps) {
+export function WordBuildStage({
+  dayContent,
+  level,
+  unlockedChars,
+  shiftUnlocked,
+  guidedOnlyKeys,
+  onProgress,
+  onComplete,
+}: WordBuildStageProps) {
   const { t } = useI18n();
   const { attempt, retrying, submitAttempt } = useGatedStage(level.accuracyGate, onComplete);
 
@@ -98,6 +107,7 @@ export function WordBuildStage({ dayContent, level, unlockedChars, guidedOnlyKey
         target={words[wordIndex]}
         locked={locked}
         unlockedChars={unlockedChars}
+        shiftUnlocked={shiftUnlocked}
         errorHandling={level.errorHandling}
         fingerHint={level.fingerHint}
         onComplete={handleWordComplete}

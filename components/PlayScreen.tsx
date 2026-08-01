@@ -5,8 +5,7 @@ import type { DayNumber, Profile } from "@/lib/types";
 import type { ErrorHandlingMode } from "@/content/levels";
 import type { StageTypingSummary } from "@/lib/typing-engine";
 import { LEVELS } from "@/content/levels";
-import { getDayPracticeContent, getCumulativeUnlockedKeys, isShiftUnlocked } from "@/content/days";
-import { getLastCompletedDay } from "@/lib/storage";
+import { getAvailableDays, getDayPracticeContent, getCumulativeUnlockedKeys, isShiftUnlocked } from "@/content/days";
 import { useI18n } from "@/context/I18nContext";
 import { DayPath } from "@/components/DayPath";
 import { GameStage } from "@/components/stages/GameStage";
@@ -44,24 +43,24 @@ type ActiveGame = { type: "day"; day: DayNumber } | { type: "bonus"; id: BonusGa
 
 /**
  * A "just for fun" area, entirely separate from the graded daily session:
- * replay any game from a day the child has already finished, with no
- * scoring, no accuracy gate, and nothing written to storage. Only days the
- * child has actually completed are selectable — a game is a reward for
- * finishing that day's lesson, not a menu of everything that exists.
+ * play any day's game, with no scoring, no accuracy gate, and nothing
+ * written to storage.
+ *
+ * Every day with content is selectable. This used to be gated on days the
+ * child had actually completed, but that reads a history the app no longer
+ * keeps (a child isn't guaranteed the same laptop twice — see
+ * docs/profile-recovery-plan.md), which would have left the picker
+ * permanently empty. A teacher steers which day is appropriate.
  *
  * Bonus games (Ninja Hop, Maze Runner, Star Blaster, Car Race) sit below the
  * day picker — they aren't tied to any single day's curriculum, so they use
- * whatever keys are unlocked through the child's most recently completed day
- * instead of one day's fixed word bank.
+ * whatever keys are unlocked through the day currently selected above.
  */
 export function PlayScreen({ profile, onExit }: PlayScreenProps) {
   const { t } = useI18n();
-  const lastCompletedDay = getLastCompletedDay(profile);
-  const completedDays: DayNumber[] = lastCompletedDay
-    ? (Array.from({ length: lastCompletedDay }, (_, i) => i + 1) as DayNumber[])
-    : [];
+  const playableDays = getAvailableDays(profile.language);
 
-  const [selectedDay, setSelectedDay] = useState<DayNumber | null>(completedDays[0] ?? null);
+  const [selectedDay, setSelectedDay] = useState<DayNumber | null>(playableDays[0] ?? null);
   const [activeGame, setActiveGame] = useState<ActiveGame>(null);
 
   // Nothing to score in play mode, so "complete" just means "played it" —
@@ -86,15 +85,15 @@ export function PlayScreen({ profile, onExit }: PlayScreenProps) {
     }
   }
 
-  if (activeGame?.type === "bonus" && lastCompletedDay) {
+  if (activeGame?.type === "bonus" && selectedDay) {
     const bonusGame = BONUS_GAMES.find((g) => g.id === activeGame.id);
     if (bonusGame) {
       const BonusGame = bonusGame.Component;
       return (
         <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
           <BonusGame
-            unlockedChars={getCumulativeUnlockedKeys(lastCompletedDay)}
-            shiftUnlocked={isShiftUnlocked(lastCompletedDay)}
+            unlockedChars={getCumulativeUnlockedKeys(selectedDay)}
+            shiftUnlocked={isShiftUnlocked(selectedDay)}
             errorHandling={LEVELS[profile.lastLevel].errorHandling}
             onComplete={backToPicker}
           />
@@ -110,16 +109,15 @@ export function PlayScreen({ profile, onExit }: PlayScreenProps) {
         <p className="font-[family-name:var(--font-ui)] text-foreground-muted">{t("playScreen.subtitle")}</p>
       </div>
 
-      {completedDays.length === 0 ? (
+      {playableDays.length === 0 ? (
         <p className="font-[family-name:var(--font-ui)] text-foreground-muted">{t("playScreen.noneYet")}</p>
       ) : (
         <>
           <div className="flex w-full max-w-md flex-col items-center gap-3">
             <span className="font-[family-name:var(--font-ui)] text-foreground-muted">{t("playScreen.dayLabel")}</span>
             <DayPath
-              availableDays={completedDays}
-              selectedDay={selectedDay ?? completedDays[0]}
-              lastCompletedDay={lastCompletedDay}
+              availableDays={playableDays}
+              selectedDay={selectedDay ?? playableDays[0]}
               onSelect={setSelectedDay}
               dayLabel={(day) => t("startScreen.dayOption", { day })}
               comingSoonLabel={t("playScreen.notYetLabel")}

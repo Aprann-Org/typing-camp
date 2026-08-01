@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTypingSession } from "@/lib/useTypingSession";
-import { buildLockedKeyConfig, getFingerForChar } from "@/content/layouts";
+import { buildLockedKeyConfig, getFingerForChar, getShiftFingerForChar } from "@/content/layouts";
 import { FINGERS, THUMB_COLOR } from "@/content/fingers";
 import {
   emptySummary,
@@ -173,6 +173,7 @@ function WordTyper({ word, unlockedChars, shiftUnlocked, errorHandling, onFinish
 
   const currentChar = !state.finished ? state.slots[state.index]?.char : undefined;
   const currentFinger = currentChar !== undefined ? getFingerForChar(currentChar) : null;
+  const shiftFinger = currentChar !== undefined ? getShiftFingerForChar(currentChar) : null;
 
   return (
     <>
@@ -209,7 +210,17 @@ function WordTyper({ word, unlockedChars, shiftUnlocked, errorHandling, onFinish
       {/* Same reasoning as the Name Animator: these words routinely contain
           keys today's lesson hasn't taught, so the hand map is instruction
           rather than a hint that a higher level should withhold. */}
-      {currentFinger && <HandMap activeFinger={currentFinger} activeLabel={t(`fingerNames.${currentFinger}`)} />}
+      {currentFinger && (
+        <HandMap
+          activeFinger={currentFinger}
+          holdFinger={shiftFinger}
+          activeLabel={
+            shiftFinger !== null && currentChar !== undefined
+              ? t("typing.shiftHint", { finger: t(`fingerNames.${shiftFinger}`), char: currentChar })
+              : t(`fingerNames.${currentFinger}`)
+          }
+        />
+      )}
     </>
   );
 }

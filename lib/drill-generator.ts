@@ -76,7 +76,36 @@ export type NewKeysCheckpoint = {
   keys: string[];
   /** This checkpoint's slice of the New Keys queue — see buildNewKeysQueue. */
   items: string[];
+  /**
+   * This checkpoint teaches Shift rather than a set of new keys: New Keys
+   * shows the chord explainer before its items, and its breather says "you
+   * learned Shift" rather than naming keys. Only the day declaring
+   * `teachesShift` gets one.
+   */
+  teachesShift?: true;
 };
+
+/**
+ * The Shift checkpoint's drills: each of today's letters alternating between
+ * its capital and lowercase form, so the child practices taking the chord on
+ * and off rather than holding Shift for a whole word.
+ *
+ * Deliberately mechanical. The payoff — a real capitalised word — arrives
+ * immediately afterwards in the day's word bank, which is what "Bondye" and
+ * "Jezi" were placed at the end of Day 4's bank for.
+ */
+function buildShiftDrills(drilledKeys: string[], burstLength: number): string[] {
+  return drilledKeys
+    .filter((key) => /^[a-z]$/.test(key))
+    .map((key) => {
+      const pair = `${key.toUpperCase()} ${key}`;
+      // Half-length: each repetition is two keystrokes plus a chord, so
+      // matching a plain drill's repetition count would make this the longest
+      // item of the day.
+      const reps = Math.max(2, Math.round(burstLength / 2));
+      return Array.from({ length: reps }, () => pair).join(" ");
+    });
+}
 
 /**
  * How dayContent.newKeyGroups splits today's drilled keys into checkpoints.
@@ -130,6 +159,13 @@ export function buildNewKeysCheckpoints(dayContent: DayPracticeContent, level: L
       known.push(key);
     }
     checkpoints.push({ keys: group, items });
+  }
+
+  // Shift comes last, once every letter of the day is in hand — it needs a
+  // letter to pair with, and the day's own new keys are the freshest ones.
+  if (dayContent.teachesShift) {
+    const items = buildShiftDrills(drilledKeysList, level.drillRepetitions.burstLength);
+    if (items.length > 0) checkpoints.push({ keys: [], items, teachesShift: true });
   }
 
   return checkpoints;

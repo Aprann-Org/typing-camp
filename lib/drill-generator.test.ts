@@ -89,6 +89,36 @@ describe("buildNewKeysCheckpoints", () => {
     expect(checkpoints[0].keys).toEqual(["f", "j"]);
   });
 
+  it("appends a Shift checkpoint only on the day that teaches Shift", () => {
+    const plain = dayWithGroups([["f", "j"]]);
+    expect(buildNewKeysCheckpoints(plain, LEVELS.builder).some((c) => c.teachesShift)).toBe(false);
+
+    const shiftDay = { ...dayWithGroups([["f", "j"]]), teachesShift: true as const };
+    const checkpoints = buildNewKeysCheckpoints(shiftDay, LEVELS.builder);
+    const shiftCheckpoint = checkpoints.at(-1)!;
+    expect(shiftCheckpoint.teachesShift).toBe(true);
+    // Last, because the chord needs letters to pair with — and its drills
+    // alternate each letter's capital and lowercase forms so the child
+    // practises taking Shift on and off, not holding it down.
+    expect(shiftCheckpoint.items[0]).toMatch(/^(F f ?)+$/);
+  });
+
+  it("scales the Shift drills by the level's key scope, like every other drill", () => {
+    const shiftDay = {
+      ...dayWithGroups([
+        ["f", "j"],
+        ["d", "k"],
+      ]),
+      teachesShift: true as const,
+    };
+    // Starter's "half" scope drills f and j only, so it gets two Shift drills
+    // where Builder gets four.
+    const starter = buildNewKeysCheckpoints(shiftDay, LEVELS.starter).at(-1)!;
+    const builder = buildNewKeysCheckpoints(shiftDay, LEVELS.builder).at(-1)!;
+    expect(starter.items).toHaveLength(2);
+    expect(builder.items).toHaveLength(4);
+  });
+
   it("every day's authored newKeyGroups covers that day's new keys exactly once", async () => {
     const { getDayPracticeContent } = await import("@/content/days");
     for (const day of [1, 2, 3, 4, 5] as const) {
