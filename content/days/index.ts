@@ -89,7 +89,15 @@ export function getCumulativeUnlockedKeys(day: DayNumber): Set<string> {
   return unlocked;
 }
 
-/** Shift itself is introduced Day 4 (capitalization) — see the key ladder. */
+/**
+ * Whether Shift (and so capitals) is available as of `day`. Derived from the
+ * day that declares `teachesShift` rather than hardcoded, so the ladder can
+ * move without this and the curriculum silently disagreeing.
+ * scripts/validate-content.ts enforces that exactly one day declares it.
+ */
 export function isShiftUnlocked(day: DayNumber): boolean {
-  return day >= 4;
+  for (let d = 1; d <= day; d++) {
+    if (DAY_PRACTICE[d as DayNumber]?.teachesShift) return true;
+  }
+  return false;
 }

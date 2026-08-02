@@ -1,0 +1,36 @@
+.intact {
+  opacity: 1;
+  transform-origin: center;
+}
+
+.popped {
+  opacity: 0.15;
+  transform: scale(0.5);
+  transform-origin: center;
+  transition: opacity 260ms ease-out, transform 260ms ease-out;
+}
+
+/* The beam fades out right after it fires — keyed by `revealed` in the
+   component so it replays on every new hit rather than only once. */
+.beam {
+  animation: fade 260ms ease-out forwards;
+}
+
+@keyframes fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popped {
+    transition: none;
+  }
+  .beam {
+    animation: none;
+    opacity: 0;
+  }
+}

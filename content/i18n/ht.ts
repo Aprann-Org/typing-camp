@@ -35,6 +35,8 @@ const ht: Strings = {
     done: "Fini",
     yes: "Wi",
     no: "Non",
+    cancel: "Anile",
+    timeLabel: "Tan:",
   },
 
   languageToggle: {
@@ -71,12 +73,6 @@ const ht: Strings = {
     // app deliberately collects only a first name.
     nameLabel: "Ki prenon ou?",
     namePlaceholder: "Tape prenon ou",
-    existingProfilesLabel: "Ou te deja tape semèn sa a? Peze non ou.",
-    isThisYouTitle: "Èske se ou?",
-    isThisYouLastDay: "Dènye fwa ou te fini Jou {day}.",
-    isThisYouNoProgress: "Ou poko fini yon jou.",
-    isThisYouConfirm: "Wi, se mwen",
-    isThisYouDeny: "Non, se yon lòt moun",
     dayLabel: "Sou ki jou ou ye?",
     dayOption: "Jou {day}",
     // REVIEW: "Ap vini" ("coming") for days 2-5, not yet built.
@@ -84,11 +80,33 @@ const ht: Strings = {
     levelLabel: "Ki nivo?",
     startButton: "Kòmanse tape",
     nameRequired: "Tape prenon ou anvan.",
+    playGamesButton: "Jwe yon jwèt sèlman",
+  },
+
+  playScreen: {
+    title: "Jwe yon jwèt",
+    // REVIEW: reworded 2026-08-01 — games are no longer gated on days the
+    // child has finished, so "yon jou ou fin fè" (a day you finished) was
+    // no longer true. Unreviewed by a native speaker.
+    subtitle: "Jwe jwèt nenpòt jou — se pou plezi, pa gen anyen ki sove.",
+    dayLabel: "Jwèt ki jou?",
+    // REVIEW: now marks days with no content yet, not days not yet finished
+    // — mirrors startScreen.dayComingSoon. Unreviewed by a native speaker.
+    notYetLabel: "Ap vini",
+    playButton: "Jwe",
+    // REVIEW: reworded 2026-08-01 alongside subtitle. Unreviewed.
+    noneYet: "Pa gen jwèt isit la pou kounye a.",
+    backButton: "Tounen",
+    bonusGamesLabel: "Jwèt bonis",
+    ninjaGameLabel: "Ninja k ap sote",
+    mazeGameLabel: "Labirent",
+    starBlasterGameLabel: "Kanon zetwal",
+    carRaceGameLabel: "Kous machin",
   },
 
   levels: {
     starter: { name: "Kòmansè", subtitle: "Premye fwa m ap tape" },
-    builder: { name: "Konstriktè", subtitle: "Mwen te deja tape" },
+    builder: { name: "Konstriktè", subtitle: "Mwen konn tape deja" },
     // REVIEW: "Flyer" deliberately NOT translated as "Volè" — "vòlè" means
     // thief, and the two are near-homophones in speech, which is a bad
     // thing to call a child. "Zwazo" (bird) keeps the flying idea, is
@@ -119,6 +137,24 @@ const ht: Strings = {
       title: "Nouvo touch",
       instruction: "Ann rankontre nouvo touch jodi a.",
       tryIt: "Eseye l",
+      checkpointTitle: "Byen fèt!",
+      checkpointMessage: "Ou fèk aprann {keys}.",
+      checkpointContinue: "Pwochen touch yo",
+      spaceKeyLabel: "Espas",
+      // REVIEW: "Shift" is left in English everywhere on purpose — that is the
+      // word printed on the physical key, so translating it would break the
+      // link between the screen and the keyboard in front of the child. Only
+      // the verbs around it are Kreyòl.
+      shiftIntroTitle: "Ann rankontre touch Shift",
+      // REVIEW: "kenbe l anba" = hold it down. Check this reads as a sustained
+      // hold and not a single press — the distinction is the whole lesson.
+      shiftIntroHold: "Kenbe touch Shift anba ak ti dwèt ou. Kontinye kenbe l.",
+      // REVIEW: "gwo lèt" for a capital letter (vs "ti lèt" for lowercase).
+      // Used consistently in the three strings below and in typing.* — if you
+      // change it, change all of them.
+      shiftIntroPress: "Kounye a peze yon lèt. Ou jwenn yon gwo lèt.",
+      shiftIntroOtherHand: "Sèvi ak Shift ki sou lòt men an parapò ak lèt la.",
+      shiftCheckpointMessage: "Ou fèk aprann Shift. Kounye a ou ka ekri gwo lèt.",
     },
     wordBuild: {
       title: "Bati mo",
@@ -136,13 +172,25 @@ const ht: Strings = {
       title: "Bati vèsè a",
       instruction: "Tape vèsè a. Lèt ki pal yo ap ranpli poukont yo — tape rès la.",
       counter: "Ou tape {typed} sou {total} karaktè poukont ou.",
-      comparisonLine: "Jou {day} ou te tape {previous}. Jodi a ou tape {current}.",
       firstTimeLine: "Jodi a ou tape {current} karaktè poukont ou.",
     },
     report: {
       title: "Bon travay",
+      // REVIEW: added 2026-08-01 alongside the day-score feature, machine
+      // -drafted and unreviewed by a native speaker. "Pwen" (points) rather
+      // than "nòt" (mark/grade) throughout — the English is deliberately
+      // "points earned", never a grade, and "nòt" would import exactly the
+      // school-report reading the brief says to avoid.
+      scoreLabel: "pwen sou {max}",
+      scoreIdentity: "{name} · Jou {day} · {level}",
+      shareNote: "Di pwofesè ou konbyen pwen ou fè anvan ou fèmen ekran sa a. Anyen isit la pa sove.",
       wpmLabel: "Mo pa minit",
       accuracyLabel: "Presizyon",
+      // REVIEW: added 2026-08-01, unreviewed. "Touch ou tape" = keys you
+      // typed; "Tan w ap tape" = time you spend typing.
+      charsTypedLabel: "Touch ou tape",
+      timeTypingLabel: "Tan w ap tape",
+      timeValue: "{minutes}m {seconds}s",
       keysMasteredLabel: "Touch ou metrize",
       // REVIEW: English is "Keys still warming up" — a warm idiom that
       // doesn't calque into Kreyòl. Rendered as "keys that need more
@@ -153,18 +201,22 @@ const ht: Strings = {
       // REVIEW: "Meday" (medal) rather than a loanword for "badge" —
       // warmer and instantly clear to a child.
       badgeLabel: "Meday ou genyen",
-      // REVIEW: "streak" has no compact Kreyòl equivalent; rendered as
-      // "days one after another".
-      streakLabel: "Jou youn dèyè lòt",
-      badgeShelfLabel: "Meday ou genyen semèn sa a",
       doneButton: "Fini pou jodi a",
     },
   },
 
   typing: {
-    // REVIEW: mirrors streakLabel's "one after another" phrasing, applied to
-    // a keystroke run rather than a day run.
+    // REVIEW: "streak" has no compact Kreyòl equivalent; rendered as "one
+    // after another", applied here to a run of correct keystrokes.
     streak: "{count} youn apre lòt",
+    // REVIEW: "Shift" stays English (see stages.newKeys.shiftIntroTitle for
+    // why). {finger} arrives already translated, e.g. "ti dwèt dwat".
+    shiftHint: "Kenbe Shift ak {finger} ou, apre peze {char}.",
+    shiftMissNudge: "Kenbe Shift pou fè yon gwo lèt.",
+    shiftReleaseNudge: "Lage Shift pou yon ti lèt.",
+    // REVIEW: "Caps Lock" also stays English — same reason as Shift, it is the
+    // label on the physical key.
+    capsLockWarning: "Caps Lock limen. Peze Caps Lock pou etenn li.",
   },
 
   feedback: {
@@ -209,6 +261,18 @@ const ht: Strings = {
     },
     day5FindTheSheep: {
       instruction: "Tape chak mo pou kontinye chache. Gadò a toujou jwenn mouton ki pèdi a.",
+    },
+    ninjaFlight: {
+      instruction: "Tape chak lèt pou voye ninja a sote rive nan drapo a.",
+    },
+    mazeRunner: {
+      instruction: "Tape chak lèt pou avanse nan laberent rive nan pòt la.",
+    },
+    starBlaster: {
+      instruction: "Tape chak lèt pou eksploze pwochen zetwal la nan syèl la.",
+    },
+    carRace: {
+      instruction: "Tape chak lèt pou kondwi rive nan drapo damye a.",
     },
   },
 

@@ -117,6 +117,52 @@ describe("processKeystroke — error handling modes", () => {
   });
 });
 
+// A Shift mistake looks identical to any other miss in the raw comparison, but
+// it is a completely different mistake to make: the child found the right key
+// and got the modifier wrong. Blaming the letter key sends them to practise
+// the one thing they already did correctly.
+describe("processKeystroke — telling a Shift mistake from a wrong key", () => {
+  it("flags a missing Shift on a capital", () => {
+    let state = createTypingState("B", NO_LOCKED);
+    state = processKeystroke(state, "b", NO_LOCKED, "gentle-nudge");
+    expect(state.lastMissKind).toBe("shift");
+  });
+
+  it("flags a Shift held when it shouldn't be (stuck Shift, or Caps Lock)", () => {
+    let state = createTypingState("b", NO_LOCKED);
+    state = processKeystroke(state, "B", NO_LOCKED, "gentle-nudge");
+    expect(state.lastMissKind).toBe("shift");
+  });
+
+  it("flags shifted punctuation, where the two forms aren't a case pair", () => {
+    // "!" is Shift+"1" — a toLowerCase() comparison would call this a wrong
+    // key and point the child at the wrong place on Day 5.
+    let state = createTypingState("!", NO_LOCKED);
+    state = processKeystroke(state, "1", NO_LOCKED, "gentle-nudge");
+    expect(state.lastMissKind).toBe("shift");
+  });
+
+  it("calls a genuinely different key a key mistake", () => {
+    let state = createTypingState("f", NO_LOCKED);
+    state = processKeystroke(state, "d", NO_LOCKED, "gentle-nudge");
+    expect(state.lastMissKind).toBe("key");
+  });
+
+  it("clears on a correct keystroke and on backspace", () => {
+    let state = createTypingState("fj", NO_LOCKED);
+    state = processKeystroke(state, "d", NO_LOCKED, "gentle-nudge");
+    expect(state.lastMissKind).toBe("key");
+    state = processKeystroke(state, "f", NO_LOCKED, "gentle-nudge");
+    expect(state.lastMissKind).toBeNull();
+
+    let flyer = createTypingState("fj", NO_LOCKED);
+    flyer = processKeystroke(flyer, "F", NO_LOCKED, "must-correct");
+    expect(flyer.lastMissKind).toBe("shift");
+    flyer = processBackspace(flyer);
+    expect(flyer.lastMissKind).toBeNull();
+  });
+});
+
 describe("locked characters never affect accuracy or WPM", () => {
   it("guided characters are not counted in correctCount/incorrectCount", () => {
     const locked = autofill("V", "i", "n", "c", "e");

@@ -29,12 +29,6 @@
   color: var(--foreground);
 }
 
-.stop.done {
-  background: var(--accent-action);
-  border-color: var(--accent-action);
-  color: var(--accent-action-text);
-}
-
 .stop.selected {
   border-color: var(--accent-celebrate);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-celebrate) 45%, transparent);
@@ -51,8 +45,4 @@
   height: 2px;
   flex-shrink: 0;
   background: var(--border-subtle);
-}
-
-.line.lineDone {
-  background: var(--accent-action);
 }

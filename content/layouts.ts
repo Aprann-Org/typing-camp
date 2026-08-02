@@ -1,4 +1,4 @@
-import type { FingerId } from "./fingers";
+import { FINGERS, type FingerId } from "./fingers";
 
 // The physical keyboard layout: which finger is responsible for each key.
 // This is layout-level fact (which finger reaches which physical key), not
@@ -12,7 +12,7 @@ import type { FingerId } from "./fingers";
 // code should need to change.
 
 export type KeyDef = {
-  /** Base (unshifted) character this key produces. Space is " ". */
+  /** Base (unshifted) character this key produces. Space is " ". Empty for a modifier. */
   char: string;
   /** Character produced with Shift held, if different from `char`. */
   shiftChar?: string;
@@ -22,6 +22,19 @@ export type KeyDef = {
   width?: number;
   /** Display label, for keys where showing the raw char would be unclear. */
   label?: string;
+  /**
+   * A modifier key: drawn on the board but never produces a character, so it
+   * is deliberately excluded from the char -> KeyDef lookup below. Modifiers
+   * are identified by `finger` (left vs right Shift), which is also how the
+   * Keyboard picks which one to highlight for a given chord.
+   */
+  modifier?: "shift";
+  /**
+   * Stable render identity. Needed only where `char` is absent or shared —
+   * the two Shift tiles both have an empty `char`, so React needs this to
+   * tell them apart.
+   */
+  id?: string;
 };
 
 export type LayoutId = "qwerty" | "azerty";
@@ -77,6 +90,10 @@ const QWERTY_ROWS: KeyDef[][] = [
     { char: "'", shiftChar: '"', finger: "rightPinky" },
   ],
   [
+    // Both Shifts are drawn, at the ends of the bottom row where they
+    // physically live. Which one a child should use depends on the letter —
+    // see getShiftFingerForChar.
+    { id: "shiftLeft", char: "", modifier: "shift", finger: "leftPinky", width: 2.25, label: "Shift" },
     { char: "z", shiftChar: "Z", finger: "leftPinky" },
     { char: "x", shiftChar: "X", finger: "leftRing" },
     { char: "c", shiftChar: "C", finger: "leftMiddle" },
@@ -87,6 +104,7 @@ const QWERTY_ROWS: KeyDef[][] = [
     { char: ",", shiftChar: "<", finger: "rightMiddle" },
     { char: ".", shiftChar: ">", finger: "rightRing" },
     { char: "/", shiftChar: "?", finger: "rightPinky" },
+    { id: "shiftRight", char: "", modifier: "shift", finger: "rightPinky", width: 2.25, label: "Shift" },
   ],
   [{ char: " ", finger: "thumb", width: 6, label: "Space" }],
 ];
@@ -111,6 +129,10 @@ function getKeyLookup(layoutId: LayoutId): Map<string, KeyDef> {
   cached = new Map();
   for (const row of LAYOUTS[layoutId].rows) {
     for (const key of row) {
+      // Modifiers produce no character, so they stay out of this map
+      // entirely — that is what keeps every getKeyForChar consumer (the
+      // engine, the validator, the games) unaware that they exist.
+      if (key.modifier) continue;
       cached.set(key.char, key);
       if (key.shiftChar) cached.set(key.shiftChar, key);
     }
@@ -135,12 +157,35 @@ export function requiresShift(char: string, layoutId: LayoutId = DEFAULT_LAYOUT)
   return !!key && !!key.shiftChar && key.shiftChar === char;
 }
 
+/**
+ * Sentinel standing in for the Shift key in the character-keyed sets the
+ * Keyboard already takes (unlockedChars, justUnlockedChars). Safe because
+ * modifiers are excluded from the char lookup above, so this string can never
+ * collide with a real typeable character.
+ */
+export const SHIFT_MODIFIER_ID = "Shift";
+
+/**
+ * The pinky that must HOLD Shift to type `char` — always on the hand opposite
+ * the letter, because you cannot hold left Shift and reach left-pinky Q with
+ * the same hand. Null for characters that need no Shift at all.
+ *
+ * The app highlights this but never scores which Shift was actually pressed,
+ * so teaching the correct hand costs a child nothing if they use the other.
+ */
+export function getShiftFingerForChar(char: string, layoutId: LayoutId = DEFAULT_LAYOUT): FingerId | null {
+  const key = getKeyForChar(char, layoutId);
+  if (!key || !requiresShift(char, layoutId)) return null;
+  if (key.finger === "thumb") return null;
+  return FINGERS[key.finger].hand === "left" ? "rightPinky" : "leftPinky";
+}
+
 /** Whether a character is typeable as of today's unlocked key set. */
-function isCharUnlocked(
+export function isCharUnlocked(
   char: string,
   unlockedChars: ReadonlySet<string>,
   shiftUnlocked: boolean,
-  layoutId: LayoutId
+  layoutId: LayoutId = DEFAULT_LAYOUT
 ): boolean {
   const key = getKeyForChar(char, layoutId);
   if (!key) return false;
@@ -158,19 +203,18 @@ function isCharUnlocked(
  *
  * `mode: "guided"` is Theme Challenge / game behavior: not-yet-unlocked
  * characters are still typed by the child (with the finger shown) and just
- * aren't scored. Two kinds of character are autofilled even in guided mode,
- * because in both cases there is no keystroke the child could reasonably be
- * expected to produce:
+ * aren't scored. One kind of character is autofilled even in guided mode,
+ * because there is no keystroke the child could reasonably produce:
+ * characters with NO key on this layout at all — e.g. an accented Kreyòl
+ * character on US QWERTY. Without this a child whose name contains "è" would
+ * be stuck forever.
  *
- *   1. Characters with NO key on this layout at all — e.g. an accented
- *      Kreyòl character on US QWERTY. Without this a child whose name
- *      contains "è" would be stuck forever.
- *   2. Characters needing Shift before Shift has been taught (Day 4).
- *      Guided mode shows one finger on the hand map, which cannot express a
- *      two-key chord — so a capital on Day 1 silently asks a child to
- *      discover Shift on their own, and the hint actively misleads them.
- *      This is what makes a child's own capitalized name typeable on Day 1
- *      and theme phrases typeable on Days 2-3.
+ * Capitals before Shift is taught (Day 4) used to be autofilled too, because
+ * the hand map could only show one finger and so a capital on Day 1 silently
+ * asked a child to discover Shift alone. The hand map now draws the full
+ * Shift+letter chord, so these are guided like any other untaught character —
+ * a Day-1 child types the capital in their own name, unscored, with the
+ * chord shown.
  */
 export function buildLockedKeyConfig(
   text: string,
@@ -184,8 +228,7 @@ export function buildLockedKeyConfig(
   for (const char of text) {
     if (isCharUnlocked(char, unlockedChars, shiftUnlocked, layoutId)) continue;
     const hasKey = getKeyForChar(char, layoutId) !== undefined;
-    const needsUntaughtShift = !shiftUnlocked && requiresShift(char, layoutId);
-    if (mode === "autofill-all" || !hasKey || needsUntaughtShift) autofill.add(char);
+    if (mode === "autofill-all" || !hasKey) autofill.add(char);
     else guidedTyped.add(char);
   }
   return { autofill, guidedTyped };

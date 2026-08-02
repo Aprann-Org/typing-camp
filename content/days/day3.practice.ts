@@ -16,6 +16,14 @@ import type { DayPracticeContent } from "@/lib/types";
 const day3Practice: DayPracticeContent = {
   day: 3,
   newKeys: ["q", "w", "o", "p", "n", "m"],
+  // Three checkpoints: finish the top row with its two mirrored same-finger
+  // pairs (w/o = ring fingers, q/p = pinkies), then add the bottom-row
+  // index reach (n/m — both right index, same relationship as Day 1's g/h).
+  newKeyGroups: [
+    ["w", "o"],
+    ["q", "p"],
+    ["n", "m"],
+  ],
   drills: [
     { keys: ["o"], pattern: "o o o o o o" },
     { keys: ["n"], pattern: "n n n n n n" },

@@ -16,6 +16,8 @@ const en = {
     done: "Done",
     yes: "Yes",
     no: "No",
+    cancel: "Cancel",
+    timeLabel: "Time:",
   },
 
   languageToggle: {
@@ -44,18 +46,28 @@ const en = {
     subtitle: "Type your first name to begin.",
     nameLabel: "What's your first name?",
     namePlaceholder: "Type your first name",
-    existingProfilesLabel: "Already typed this week? Tap your name.",
-    isThisYouTitle: "Is this you?",
-    isThisYouLastDay: "You last completed Day {day}.",
-    isThisYouNoProgress: "You haven't finished a day yet.",
-    isThisYouConfirm: "Yes, that's me",
-    isThisYouDeny: "No, someone else",
     dayLabel: "Which day are you on?",
     dayOption: "Day {day}",
     dayComingSoon: "Coming soon",
     levelLabel: "Which level?",
     startButton: "Start typing",
     nameRequired: "Type your first name first.",
+    playGamesButton: "Just play a game",
+  },
+
+  playScreen: {
+    title: "Play a game",
+    subtitle: "Play any day's game — just for fun, nothing to save.",
+    dayLabel: "Which day's game?",
+    notYetLabel: "Coming soon",
+    playButton: "Play",
+    noneYet: "No games here yet.",
+    backButton: "Back",
+    bonusGamesLabel: "Bonus games",
+    ninjaGameLabel: "Ninja hop",
+    mazeGameLabel: "Maze runner",
+    starBlasterGameLabel: "Star blaster",
+    carRaceGameLabel: "Car race",
   },
 
   levels: {
@@ -83,6 +95,15 @@ const en = {
       title: "New keys",
       instruction: "Let's meet today's new keys.",
       tryIt: "Try it",
+      checkpointTitle: "Nice work!",
+      checkpointMessage: "You just learned {keys}.",
+      checkpointContinue: "Next keys",
+      spaceKeyLabel: "Space",
+      shiftIntroTitle: "Meet the Shift key",
+      shiftIntroHold: "Hold Shift down with your pinky. Keep holding it.",
+      shiftIntroPress: "Now press a letter. You get a big letter.",
+      shiftIntroOtherHand: "Use the Shift on the other hand from the letter.",
+      shiftCheckpointMessage: "You just learned Shift. Now you can write big letters.",
     },
     wordBuild: {
       title: "Word build",
@@ -100,25 +121,35 @@ const en = {
       title: "Verse builder",
       instruction: "Type the verse. Dimmed letters fill in on their own — just type the rest.",
       counter: "You typed {typed} of {total} characters yourself.",
-      comparisonLine: "Day {day} you typed {previous}. Today you typed {current}.",
       firstTimeLine: "You typed {current} characters yourself today.",
     },
     report: {
       title: "Great work",
+      // Points earned, never a grade kept — this line is shown at every
+      // level, including Starter, so the whole room has one number to
+      // compare. See lib/day-score.ts for what goes into it.
+      scoreLabel: "points out of {max}",
+      scoreIdentity: "{name} · Day {day} · {level}",
+      shareNote: "Read your score out to your teacher before you close this screen. Nothing here is saved.",
       wpmLabel: "Words per minute",
       accuracyLabel: "Accuracy",
+      charsTypedLabel: "Keys typed",
+      timeTypingLabel: "Time typing",
+      timeValue: "{minutes}m {seconds}s",
       keysMasteredLabel: "Keys mastered",
       keysWarmingUpLabel: "Keys still warming up",
       noWeakKeys: "Every key you drilled today is solid.",
       badgeLabel: "Badge earned",
-      streakLabel: "Day streak",
-      badgeShelfLabel: "Badges earned this week",
       doneButton: "Done for today",
     },
   },
 
   typing: {
     streak: "{count} in a row",
+    shiftHint: "Hold Shift with your {finger}, then press {char}.",
+    shiftMissNudge: "Hold Shift to make a big letter.",
+    shiftReleaseNudge: "Let go of Shift for a small letter.",
+    capsLockWarning: "Caps Lock is on. Press Caps Lock to turn it off.",
   },
 
   feedback: {
@@ -158,6 +189,18 @@ const en = {
     },
     day5FindTheSheep: {
       instruction: "Type each word to keep searching. The shepherd always finds the lost sheep.",
+    },
+    ninjaFlight: {
+      instruction: "Type each letter to send the ninja hopping toward the flag.",
+    },
+    mazeRunner: {
+      instruction: "Type each letter to move through the maze toward the door.",
+    },
+    starBlaster: {
+      instruction: "Type each letter to blast the next star out of the sky.",
+    },
+    carRace: {
+      instruction: "Type each letter to drive toward the checkered flag.",
     },
   },
 

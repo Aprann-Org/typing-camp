@@ -27,6 +27,12 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
   const [calmMode, setCalmModeState] = useState(false);
 
   useEffect(() => {
+    // getDeviceSettings() reads localStorage, which doesn't exist on the
+    // server — this can only run after mount, in an effect, not during
+    // render (a render-time read here is exactly the class of bug that
+    // produces a hydration mismatch, since the server has no localStorage
+    // to read).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCalmModeState(getDeviceSettings().calmMode);
   }, []);
 

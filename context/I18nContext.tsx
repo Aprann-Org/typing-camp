@@ -35,7 +35,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       const value = getByPath(strings, path);
       if (typeof value !== "string") {
         if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
           console.warn(`i18n: missing or non-string key "${path}"`);
         }
         return path;

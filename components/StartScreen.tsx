@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { DayNumber, Profile } from "@/lib/types";
 import { LEVEL_ORDER, DEFAULT_LEVEL, type LevelId } from "@/content/levels";
 import { getAvailableDays } from "@/content/days";
-import { getAllProfiles, findProfileByName, createProfile, getLastCompletedDay } from "@/lib/storage";
+import { createProfile } from "@/lib/storage";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useI18n } from "@/context/I18nContext";
 import { Mascot } from "@/components/Mascot";
@@ -13,27 +13,27 @@ import { LevelIcon } from "@/components/LevelIcon";
 import { NameLivePreview } from "@/components/NameLivePreview";
 import styles from "./StartScreen.module.css";
 
-type Step = "enterName" | "confirm" | "pickSession";
+// Every sitting is its own fresh profile — no lookup, no "is this you?", no
+// resuming. Children aren't guaranteed the same laptop two days running (and
+// storage is per-machine), so continuity was unreliable by construction and
+// the parts of the UI that promised it were misreporting for most children.
+// See docs/profile-recovery-plan.md.
+type Step = "enterName" | "pickSession";
 
 type StartScreenProps = {
   onStart: (profile: Profile, day: DayNumber, level: LevelId) => void;
+  onPlay: (profile: Profile) => void;
 };
 
-export function StartScreen({ onStart }: StartScreenProps) {
+export function StartScreen({ onStart, onPlay }: StartScreenProps) {
   const { t } = useI18n();
   const { language, setLanguage, setActiveProfile } = useAppSettings();
   const [step, setStep] = useState<Step>("enterName");
   const [nameInput, setNameInput] = useState("");
-  const [existingProfiles, setExistingProfiles] = useState<Profile[]>([]);
-  const [candidate, setCandidate] = useState<Profile | null>(null);
   const [resolvedProfile, setResolvedProfile] = useState<Profile | null>(null);
   const [selectedDay, setSelectedDay] = useState<DayNumber>(1);
   const [selectedLevel, setSelectedLevel] = useState<LevelId>(DEFAULT_LEVEL);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setExistingProfiles(getAllProfiles());
-  }, []);
 
   const availableDays = getAvailableDays(language);
 
@@ -51,48 +51,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
       return;
     }
     setError(null);
-    const match = findProfileByName(trimmed);
-    if (match) {
-      setCandidate(match);
-      setStep("confirm");
-    } else {
-      selectProfile(createProfile(trimmed, language));
-    }
-  }
-
-  function handleConfirmYes() {
-    if (candidate) selectProfile(candidate);
-  }
-
-  function handleConfirmNo() {
-    const created = createProfile(nameInput.trim(), language);
-    setCandidate(null);
-    selectProfile(created);
-  }
-
-  if (step === "confirm" && candidate) {
-    const lastDay = getLastCompletedDay(candidate);
-    return (
-      <ScreenShell language={language} setLanguage={setLanguage} t={t}>
-        <div className="flex flex-col items-center gap-6 text-center">
-          <h1 className="font-[family-name:var(--font-display)] text-2xl text-foreground">
-            {t("startScreen.isThisYouTitle")}
-          </h1>
-          <p className="font-[family-name:var(--font-ui)] text-lg text-foreground">{candidate.firstName}</p>
-          <p className="font-[family-name:var(--font-ui)] text-foreground-muted">
-            {lastDay ? t("startScreen.isThisYouLastDay", { day: lastDay }) : t("startScreen.isThisYouNoProgress")}
-          </p>
-          <div className="flex gap-3">
-            <button className="btn-primary px-6 py-2" onClick={handleConfirmYes}>
-              {t("startScreen.isThisYouConfirm")}
-            </button>
-            <button className="btn-secondary px-6 py-2" onClick={handleConfirmNo}>
-              {t("startScreen.isThisYouDeny")}
-            </button>
-          </div>
-        </div>
-      </ScreenShell>
-    );
+    selectProfile(createProfile(trimmed, language));
   }
 
   if (step === "pickSession" && resolvedProfile) {
@@ -108,7 +67,6 @@ export function StartScreen({ onStart }: StartScreenProps) {
             <DayPath
               availableDays={availableDays}
               selectedDay={selectedDay}
-              lastCompletedDay={getLastCompletedDay(resolvedProfile)}
               onSelect={setSelectedDay}
               dayLabel={(day) => t("startScreen.dayOption", { day })}
               comingSoonLabel={t("startScreen.dayComingSoon")}
@@ -141,6 +99,10 @@ export function StartScreen({ onStart }: StartScreenProps) {
             onClick={() => onStart(resolvedProfile, selectedDay, selectedLevel)}
           >
             {t("startScreen.startButton")}
+          </button>
+
+          <button className="btn-secondary w-full px-6 py-2" onClick={() => onPlay(resolvedProfile)}>
+            {t("startScreen.playGamesButton")}
           </button>
         </div>
       </ScreenShell>
@@ -178,28 +140,6 @@ export function StartScreen({ onStart }: StartScreenProps) {
           </button>
         </div>
 
-        {existingProfiles.length > 0 && (
-          <div className="flex w-full flex-col gap-2">
-            <span className="font-[family-name:var(--font-ui)] text-sm text-foreground-muted">
-              {t("startScreen.existingProfilesLabel")}
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {existingProfiles.map((profile) => {
-                const lastDay = getLastCompletedDay(profile);
-                return (
-                  <button
-                    key={profile.id}
-                    className="btn-secondary flex items-center gap-2 px-4 py-2"
-                    onClick={() => selectProfile(profile)}
-                  >
-                    <span>{profile.firstName}</span>
-                    {lastDay && <span className="text-xs text-foreground-muted">{t("startScreen.dayOption", { day: lastDay })}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </ScreenShell>
   );

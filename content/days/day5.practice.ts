@@ -23,6 +23,18 @@ import type { DayPracticeContent } from "@/lib/types";
 const day5Practice: DayPracticeContent = {
   day: 5,
   newKeys: [".", ",", "'", "!", "?"],
+  // Four checkpoints, by finger: comma (right middle) alone, period (right
+  // ring) alone, apostrophe/question-mark together (both right pinky — one
+  // direct, one shifted), then "!" alone as the final checkpoint — the last
+  // character standing between the child and typing the week's memory verse
+  // unassisted, so it gets its own dedicated moment rather than being lumped
+  // in with the rest.
+  newKeyGroups: [
+    [","],
+    ["."],
+    ["'", "?"],
+    ["!"],
+  ],
   drills: [
     { keys: ["."], pattern: ". . . . . ." },
     { keys: [","], pattern: ", , , , , ," },

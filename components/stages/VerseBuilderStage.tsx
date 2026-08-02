@@ -12,14 +12,11 @@ import { useAppSettings } from "@/context/AppSettingsContext";
 import { useTypingInputFocus } from "@/context/OverlayContext";
 import styles from "./VerseBuilderStage.module.css";
 
-type PriorProgress = { day: number; charsTypedUnassisted: number } | null;
-
 type VerseBuilderStageProps = {
   dayContent: DayPracticeContent;
   level: LevelConfig;
   unlockedChars: ReadonlySet<string>;
   shiftUnlocked: boolean;
-  priorProgress: PriorProgress;
   /** Reports fraction of the verse typed (0-1) for the journey stepper. */
   onProgress?: (fraction: number) => void;
   onComplete: (summary: StageTypingSummary, verseCharsTypedUnassisted: number) => void;
@@ -43,7 +40,6 @@ export function VerseBuilderStage({
   level,
   unlockedChars,
   shiftUnlocked,
-  priorProgress,
   onProgress,
   onComplete,
 }: VerseBuilderStageProps) {
@@ -66,7 +62,10 @@ export function VerseBuilderStage({
 
   const [completing, setCompleting] = useState(false);
   const [blooming, setBlooming] = useState(false);
-  const finalCountRef = useRef(0);
+  // The count the finish screen displays — real render state (it's read
+  // directly in the JSX below), not a ref, since a ref's `.current` can't be
+  // read during render.
+  const [finalCount, setFinalCount] = useState(0);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const { state, handleKeyDown, inputRef } = useTypingSession({
@@ -75,11 +74,12 @@ export function VerseBuilderStage({
     errorHandling: level.errorHandling,
     soundEnabled,
     onComplete: (finalState: TypingState) => {
-      finalCountRef.current = finalState.correctCount + finalState.incorrectCount;
+      const count = finalState.correctCount + finalState.incorrectCount;
+      setFinalCount(count);
       setCompleting(true);
       const t1 = setTimeout(() => setBlooming(true), HOLD_MS);
       const t2 = setTimeout(() => {
-        onComplete(summarizeTypingState(finalState), finalCountRef.current);
+        onComplete(summarizeTypingState(finalState), count);
       }, HOLD_MS + BLOOM_MS);
       timersRef.current.push(t1, t2);
     },
@@ -89,6 +89,12 @@ export function VerseBuilderStage({
 
   useEffect(() => {
     return () => {
+      // Reading timersRef.current here on purpose: we want whatever timers
+      // have accumulated by unmount time (they're scheduled well after this
+      // effect runs, on typing completion), not a snapshot from mount. This
+      // isn't a DOM ref, so the exhaustive-deps "copy ref to a variable"
+      // suggestion doesn't apply — that would miss timers scheduled later.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       timersRef.current.forEach(clearTimeout);
     };
   }, []);
@@ -137,17 +143,10 @@ export function VerseBuilderStage({
         ))}
       </div>
 
-      {completing && (
-        <p className={styles.comparison}>
-          {priorProgress
-            ? t("stages.verseBuilder.comparisonLine", {
-                day: priorProgress.day,
-                previous: priorProgress.charsTypedUnassisted,
-                current: finalCountRef.current,
-              })
-            : t("stages.verseBuilder.firstTimeLine", { current: finalCountRef.current })}
-        </p>
-      )}
+      {/* Today's count only. The old day-over-day line ("Day 1 you typed 14,
+          today 38") needed a profile that survived to the next day, which
+          nothing here can promise — see docs/profile-recovery-plan.md. */}
+      {completing && <p className={styles.comparison}>{t("stages.verseBuilder.firstTimeLine", { current: finalCount })}</p>}
     </div>
   );
 }

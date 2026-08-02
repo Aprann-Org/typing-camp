@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DayNumber, Profile, Session } from "@/lib/types";
 import { LEVELS, getDrilledKeys, type LevelId } from "@/content/levels";
 import { getDayDisplayText, getDayPracticeContent, getCumulativeUnlockedKeys, isShiftUnlocked } from "@/content/days";
+import { SHIFT_MODIFIER_ID } from "@/content/layouts";
 import { STAGE_ORDER } from "@/lib/session";
 import { stageSegmentShares } from "@/lib/session-progress";
 import { emptySummary, mergeSummaries, computeKeyMastery, type StageTypingSummary } from "@/lib/typing-engine";
-import { calculateWpm } from "@/lib/wpm";
-import { addSession, getPriorVerseProgress, getStreak } from "@/lib/storage";
+import { computeDayScore, type DayScore } from "@/lib/day-score";
+import { addSession } from "@/lib/storage";
 import { useI18n } from "@/context/I18nContext";
 import { JourneyStepper } from "@/components/JourneyStepper";
 import { TeacherControls } from "@/components/TeacherControls";
@@ -43,18 +44,26 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
   const [stageFraction, setStageFraction] = useState(0);
   const [summary, setSummary] = useState<StageTypingSummary>(emptySummary());
   const [verseCharsTypedUnassisted, setVerseCharsTypedUnassisted] = useState(0);
-  const [finalStats, setFinalStats] = useState<{ wpm: number; accuracy: number; streak: number } | null>(null);
-  // Refreshed once the session's addSession() call lands, so the report
-  // stage's badge shelf includes the badge just earned this session, not
-  // only ones from before it started.
-  const [profileForReport, setProfileForReport] = useState(profile);
-  const startedAtRef = useRef<number | null>(null);
+  const [finalScore, setFinalScore] = useState<DayScore | null>(null);
+  // Lazy initial state — the initializer runs exactly once, at mount, which
+  // is the sanctioned way to capture an impure one-time value like
+  // Date.now() (a plain render-body read would differ between the server
+  // render and the client's hydration render).
+  const [startedAt] = useState(() => Date.now());
   const savedRef = useRef(false);
-
-  if (startedAtRef.current === null) startedAtRef.current = Date.now();
 
   const unlockedChars = useMemo(() => getCumulativeUnlockedKeys(day), [day]);
   const shiftUnlocked = isShiftUnlocked(day);
+
+  // Shift rides in the same character-keyed set as the day's new letters (via
+  // a sentinel, since it produces no character) so it gets the same one-time
+  // "light up" on the day it's taught.
+  const justUnlockedChars = useMemo(() => {
+    if (!dayContent) return new Set<string>();
+    const keys = new Set(dayContent.newKeys);
+    if (dayContent.teachesShift) keys.add(SHIFT_MODIFIER_ID);
+    return keys;
+  }, [dayContent]);
 
   const guidedOnlyKeys = useMemo(() => {
     if (!dayContent) return new Set<string>();
@@ -69,8 +78,6 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
     if (!dayContent) return [];
     return dayContent.themePhrases.length > 0 ? dayContent.themePhrases : [profile.firstName];
   }, [dayContent, profile.firstName]);
-
-  const priorVerseProgress = useMemo(() => getPriorVerseProgress(profile, day), [profile, day]);
 
   // Segment lengths for the stepper, sized by how much typing each stage
   // actually holds — New Keys is most of the day, and the bar now says so.
@@ -92,13 +99,9 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
   useEffect(() => {
     if (!dayContent || !displayText || stage !== "report" || savedRef.current) return;
     savedRef.current = true;
-    const startedAt = startedAtRef.current ?? Date.now();
     const now = Date.now();
-    const wpm = calculateWpm(summary.correctCount, startedAt, now);
-    const attempted = summary.correctCount + summary.incorrectCount;
-    const accuracy = attempted === 0 ? 1 : summary.correctCount / attempted;
+    const score = computeDayScore(summary);
     const { mastered } = computeKeyMastery(summary);
-    const charsTyped = summary.correctCount + summary.incorrectCount + summary.guidedTypedCount;
 
     const session: Session = {
       day,
@@ -106,18 +109,23 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
       startedAt: new Date(startedAt).toISOString(),
       completedAt: new Date(now).toISOString(),
       durationSeconds: Math.round((now - startedAt) / 1000),
-      wpm,
-      accuracy,
-      charsTyped,
+      activeSeconds: score.activeSeconds,
+      wpm: score.wpm,
+      accuracy: score.accuracy,
+      score: score.total,
+      charsTyped: score.charsTyped,
       verseCharsTypedUnassisted,
       keyErrors: summary.keyErrors,
       keysMastered: mastered,
       badgeEarned: dayContent.badgeId,
       stagesCompleted: REPORT_STAGE_INDEX,
     };
-    const updatedProfile = addSession(profile.id, session);
-    setFinalStats({ wpm, accuracy, streak: updatedProfile ? getStreak(updatedProfile) : 0 });
-    if (updatedProfile) setProfileForReport(updatedProfile);
+    // Still recorded even though nothing in the app reads it back: sessions
+    // are the raw material for a future teacher-side export, and writing a
+    // row costs nothing. Nothing in the UI promises it will be there
+    // tomorrow — see docs/profile-recovery-plan.md.
+    addSession(profile.id, session);
+    setFinalScore(score);
     onProgressSaved();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
@@ -164,7 +172,8 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
           dayContent={dayContent}
           level={levelConfig}
           unlockedChars={unlockedChars}
-          justUnlockedChars={new Set(dayContent.newKeys)}
+          shiftUnlocked={shiftUnlocked}
+          justUnlockedChars={justUnlockedChars}
           onProgress={reportStageProgress}
           onComplete={handleStageComplete}
         />
@@ -175,6 +184,7 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
           dayContent={dayContent}
           level={levelConfig}
           unlockedChars={unlockedChars}
+          shiftUnlocked={shiftUnlocked}
           guidedOnlyKeys={guidedOnlyKeys}
           onProgress={reportStageProgress}
           onComplete={handleStageComplete}
@@ -210,7 +220,6 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
           level={levelConfig}
           unlockedChars={unlockedChars}
           shiftUnlocked={shiftUnlocked}
-          priorProgress={priorVerseProgress}
           onProgress={reportStageProgress}
           onComplete={(stageSummary, verseChars) => {
             setVerseCharsTypedUnassisted(verseChars);
@@ -222,14 +231,12 @@ export function SessionRunner({ profile, day, level, onProgressSaved, onSessionE
 
       {stage === "report" && (
         <ReportStage
-          profile={profileForReport}
-          badgeId={dayContent.badgeId}
           badgeLabel={displayText.badgeLabel}
+          day={day}
+          firstName={profile.firstName}
           level={levelConfig}
           summary={summary}
-          wpm={finalStats?.wpm ?? 0}
-          accuracy={finalStats?.accuracy ?? 1}
-          streak={finalStats?.streak ?? 0}
+          score={finalScore ?? computeDayScore(summary)}
           onDone={onSessionEnd}
         />
       )}

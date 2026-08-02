@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buildAlternationBursts } from "./drill-generator";
+import { buildAlternationBursts, buildNewKeysCheckpoints, buildNewKeysQueue } from "./drill-generator";
+import { LEVELS } from "@/content/levels";
+import type { DayPracticeContent } from "./types";
 
 describe("buildAlternationBursts", () => {
   it("cycles through the new key plus known keys", () => {
@@ -32,5 +34,100 @@ describe("buildAlternationBursts", () => {
   it("respects burstLength", () => {
     const bursts = buildAlternationBursts("f", ["a", "s", "d"], 3, 5);
     bursts.forEach((b) => expect(b.split(" ")).toHaveLength(5));
+  });
+});
+
+function dayWithGroups(newKeyGroups?: string[][]): DayPracticeContent {
+  return {
+    day: 1,
+    newKeys: ["f", "j", "d", "k"],
+    newKeyGroups,
+    drills: [
+      { keys: ["f"], pattern: "f f f f f f" },
+      { keys: ["j"], pattern: "j j j j j j" },
+      { keys: ["d"], pattern: "d d d d d d" },
+      { keys: ["k"], pattern: "k k k k k k" },
+    ],
+    wordBank: [],
+    themePhrases: [],
+    verse: { text: "", unlockedThroughDay: 5 },
+    badgeId: "test-day",
+  };
+}
+
+describe("buildNewKeysCheckpoints", () => {
+  it("without newKeyGroups, returns everything as a single checkpoint (unchanged pre-checkpoint behavior)", () => {
+    const day = dayWithGroups(undefined);
+    const checkpoints = buildNewKeysCheckpoints(day, LEVELS.builder);
+    expect(checkpoints).toHaveLength(1);
+    expect(checkpoints[0].keys).toEqual(["f", "j", "d", "k"]);
+  });
+
+  it("splits into one checkpoint per authored group, in the authored order", () => {
+    const day = dayWithGroups([
+      ["f", "j"],
+      ["d", "k"],
+    ]);
+    const checkpoints = buildNewKeysCheckpoints(day, LEVELS.builder);
+    expect(checkpoints.map((c) => c.keys)).toEqual([
+      ["f", "j"],
+      ["d", "k"],
+    ]);
+    // Flattening checkpoints must still equal the un-grouped queue exactly —
+    // grouping only changes how items are chunked for the UI, never the content.
+    expect(checkpoints.flatMap((c) => c.items)).toEqual(buildNewKeysQueue(day, LEVELS.builder));
+  });
+
+  it("drops a group's keys the level's newKeyScope filters out, and drops the group entirely if empty", () => {
+    const day = dayWithGroups([
+      ["f", "j"],
+      ["d", "k"],
+    ]);
+    // Starter's "half" scope on 4 newKeys drills only the first 2: f, j.
+    const checkpoints = buildNewKeysCheckpoints(day, LEVELS.starter);
+    expect(checkpoints).toHaveLength(1);
+    expect(checkpoints[0].keys).toEqual(["f", "j"]);
+  });
+
+  it("appends a Shift checkpoint only on the day that teaches Shift", () => {
+    const plain = dayWithGroups([["f", "j"]]);
+    expect(buildNewKeysCheckpoints(plain, LEVELS.builder).some((c) => c.teachesShift)).toBe(false);
+
+    const shiftDay = { ...dayWithGroups([["f", "j"]]), teachesShift: true as const };
+    const checkpoints = buildNewKeysCheckpoints(shiftDay, LEVELS.builder);
+    const shiftCheckpoint = checkpoints.at(-1)!;
+    expect(shiftCheckpoint.teachesShift).toBe(true);
+    // Last, because the chord needs letters to pair with — and its drills
+    // alternate each letter's capital and lowercase forms so the child
+    // practises taking Shift on and off, not holding it down.
+    expect(shiftCheckpoint.items[0]).toMatch(/^(F f ?)+$/);
+  });
+
+  it("scales the Shift drills by the level's key scope, like every other drill", () => {
+    const shiftDay = {
+      ...dayWithGroups([
+        ["f", "j"],
+        ["d", "k"],
+      ]),
+      teachesShift: true as const,
+    };
+    // Starter's "half" scope drills f and j only, so it gets two Shift drills
+    // where Builder gets four.
+    const starter = buildNewKeysCheckpoints(shiftDay, LEVELS.starter).at(-1)!;
+    const builder = buildNewKeysCheckpoints(shiftDay, LEVELS.builder).at(-1)!;
+    expect(starter.items).toHaveLength(2);
+    expect(builder.items).toHaveLength(4);
+  });
+
+  it("every day's authored newKeyGroups covers that day's new keys exactly once", async () => {
+    const { getDayPracticeContent } = await import("@/content/days");
+    for (const day of [1, 2, 3, 4, 5] as const) {
+      const content = getDayPracticeContent(day);
+      expect(content, `day ${day} content`).toBeDefined();
+      expect(content!.newKeyGroups, `day ${day} newKeyGroups`).toBeDefined();
+      const covered = content!.newKeyGroups!.flat();
+      expect(new Set(covered), `day ${day} coverage`).toEqual(new Set(content!.newKeys));
+      expect(covered.length, `day ${day} no duplicates`).toBe(content!.newKeys.length);
+    }
   });
 });

@@ -5,10 +5,9 @@ import type { DayPracticeContent } from "@/lib/types";
 //
 // KEY LADDER — Day 4 finishes the bottom row (z x c v b) AND unlocks Shift,
 // which is the day's real milestone: every letter of the alphabet is now
-// taught, and capitals become possible for the first time. Shift's unlock
-// day is not declared here — it lives in content/days/index.ts's
-// isShiftUnlocked (day >= 4), which predates this file; keep the two in sync
-// if the ladder ever moves.
+// taught, and capitals become possible for the first time. The `teachesShift`
+// flag below is the single declaration of that — content/days/index.ts's
+// isShiftUnlocked reads it, so the two can no longer drift apart.
 //
 // The word bank deliberately ends on "Bondye" and "Jezi" — the first two
 // words in the week a child can type with a real capital letter, which is
@@ -17,6 +16,17 @@ import type { DayPracticeContent } from "@/lib/types";
 const day4Practice: DayPracticeContent = {
   day: 4,
   newKeys: ["z", "x", "c", "v", "b"],
+  teachesShift: true,
+  // All five keys are the left hand's remaining bottom row, so there's no
+  // mirrored right-hand partner left to pair with (unlike Days 2-3) — this
+  // splits by finger instead, strongest to weakest: v/b (both left index,
+  // same relationship as Day 1's g/h), then middle/ring/pinky solo.
+  newKeyGroups: [
+    ["v", "b"],
+    ["c"],
+    ["x"],
+    ["z"],
+  ],
   drills: [
     { keys: ["b"], pattern: "b b b b b b" },
     { keys: ["c"], pattern: "c c c c c c" },

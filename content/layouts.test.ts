@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLockedKeyConfig } from "./layouts";
+import { buildLockedKeyConfig, getKeyForChar, getShiftFingerForChar, requiresShift } from "./layouts";
 import { getCumulativeUnlockedKeys, getDayPracticeContent, isShiftUnlocked } from "./days";
 import type { DayNumber } from "@/lib/types";
 
@@ -11,10 +11,13 @@ import type { DayNumber } from "@/lib/types";
 const day1Keys = getCumulativeUnlockedKeys(1);
 
 describe("guided mode autofills what a child cannot yet press", () => {
-  it("autofills a capital before Shift is taught", () => {
+  // Changed deliberately: capitals used to be autofilled before Day 4 because
+  // the hand map could only show one finger. It now draws the Shift+letter
+  // chord, so a Day-1 child types the capital in their own name themselves.
+  it("guides a capital before Shift is taught rather than filling it in", () => {
     const { autofill, guidedTyped } = buildLockedKeyConfig("Tes", day1Keys, false, "guided");
-    expect(autofill.has("T")).toBe(true);
-    expect(guidedTyped.has("T")).toBe(false);
+    expect(guidedTyped.has("T")).toBe(true);
+    expect(autofill.has("T")).toBe(false);
   });
 
   it("expects the child to type a capital once Shift is taught", () => {
@@ -37,8 +40,13 @@ describe("guided mode autofills what a child cannot yet press", () => {
   });
 });
 
-describe("no day asks for a keystroke it hasn't taught", () => {
-  it("never leaves a Shift chord as guided-typed before Day 4", () => {
+describe("no day asks for a keystroke it can't show", () => {
+  // The old form of this rule banned Shift chords from guided mode outright.
+  // Now that a chord can be drawn, the rule that actually protects the child
+  // is that every guided character has a hint to draw — a guided character
+  // with no finger, or a capital with no Shift to point at, is the failure
+  // mode that used to strand them.
+  it("can always show a hint for every guided-typed character", () => {
     for (const day of [1, 2, 3, 4, 5] as DayNumber[]) {
       const content = getDayPracticeContent(day)!;
       const unlocked = getCumulativeUnlockedKeys(day);
@@ -46,13 +54,46 @@ describe("no day asks for a keystroke it hasn't taught", () => {
       for (const phrase of content.themePhrases) {
         const { guidedTyped } = buildLockedKeyConfig(phrase, unlocked, shiftOk, "guided");
         for (const ch of guidedTyped) {
-          const isCapital = ch !== ch.toLowerCase();
-          expect(
-            isCapital && !shiftOk,
-            `day ${day} theme phrase "${phrase}" asks the child to type "${ch}" before Shift is taught`
-          ).toBe(false);
+          expect(getKeyForChar(ch), `day ${day} "${phrase}": no key for guided char "${ch}"`).toBeDefined();
+          if (requiresShift(ch)) {
+            expect(
+              getShiftFingerForChar(ch),
+              `day ${day} "${phrase}": guided char "${ch}" needs Shift but has no Shift finger to show`
+            ).not.toBeNull();
+          }
         }
       }
     }
+  });
+});
+
+describe("which Shift to hold", () => {
+  it("uses the hand opposite the letter, so one hand isn't asked to do both", () => {
+    // "b" is a left-hand key, "p" a right-hand one.
+    expect(getShiftFingerForChar("B")).toBe("rightPinky");
+    expect(getShiftFingerForChar("P")).toBe("leftPinky");
+  });
+
+  it("covers shifted punctuation, not just capitals", () => {
+    // Day 5 teaches "!" and "?" as shifted characters; "!" lives on left-pinky
+    // "1", "?" on right-pinky "/".
+    expect(getShiftFingerForChar("!")).toBe("rightPinky");
+    expect(getShiftFingerForChar("?")).toBe("leftPinky");
+  });
+
+  it("is null for anything that needs no Shift", () => {
+    expect(getShiftFingerForChar("b")).toBeNull();
+    expect(getShiftFingerForChar(" ")).toBeNull();
+    expect(getShiftFingerForChar("è")).toBeNull();
+  });
+});
+
+describe("the Shift key itself is not a character", () => {
+  // The Shift tiles are drawn on the board but excluded from the char lookup.
+  // If they leaked in, the engine and the validator would both start treating
+  // "Shift" as something a child could type.
+  it("is absent from the character lookup", () => {
+    expect(getKeyForChar("Shift")).toBeUndefined();
+    expect(getKeyForChar("")).toBeUndefined();
   });
 });

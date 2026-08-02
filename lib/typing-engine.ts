@@ -1,4 +1,5 @@
 import type { ErrorHandlingMode } from "@/content/levels";
+import { DEFAULT_LAYOUT, getKeyForChar, type LayoutId } from "@/content/layouts";
 
 // Pure, DOM-free typing engine. No React, no browser APIs — this is the
 // thing that decides whether a keystroke was "correct," not a component.
@@ -64,6 +65,19 @@ export type TypingState = {
   /** Set for one tick after a miss, for a nudge/shake cue; not persisted scoring. */
   lastMiss: string | null;
   /**
+   * Why the last miss happened, so the UI can point at the right key and say
+   * something useful:
+   *
+   * - `"shift"`: the correct physical key, wrong Shift state — "b" for "B", or
+   *   "1" for "!". The letter was right, so the blame belongs on Shift.
+   * - `"key"`: a different key entirely.
+   *
+   * Which DIRECTION the Shift mistake went (needed Shift vs shouldn't have
+   * held it) is deliberately not stored — the UI derives it from the expected
+   * character via requiresShift, so there's no second thing to keep in sync.
+   */
+  lastMissKind: "shift" | "key" | null;
+  /**
    * Monotonic counters for "a correct/incorrect keystroke just happened,"
    * independent of scoring. Repeated misses on the same key leave
    * `lastMiss` unchanged (same string value), which a value-comparison
@@ -112,6 +126,7 @@ export function createTypingState(target: string, locked: LockedKeyConfig = NO_L
     completedAt: null,
     finished: slots.length === 0,
     lastMiss: null,
+    lastMissKind: null,
     correctEventId: 0,
     missEventId: 0,
   };
@@ -133,14 +148,23 @@ export function processKeystroke(
   state: TypingState,
   typedChar: string,
   locked: LockedKeyConfig,
-  errorHandling: ErrorHandlingMode
+  errorHandling: ErrorHandlingMode,
+  layoutId: LayoutId = DEFAULT_LAYOUT
 ): TypingState {
-  if (state.finished || state.index >= state.slots.length) return { ...state, lastMiss: null };
+  if (state.finished || state.index >= state.slots.length) return { ...state, lastMiss: null, lastMissKind: null };
 
   const startedAt = state.startedAt ?? Date.now();
   const current = state.slots[state.index];
   const expected = current.char;
   const isCorrect = typedChar === expected;
+
+  // Classified by PHYSICAL KEY identity, not by case: the same KeyDef means
+  // the same key, so the only thing that can differ is whether Shift was
+  // held. A toLowerCase() comparison would catch "b" vs "B" but miss "1" vs
+  // "!" and "/" vs "?" — which is exactly Day 5's content.
+  const typedKey = getKeyForChar(typedChar, layoutId);
+  const lastMissKind: "shift" | "key" =
+    !!typedKey && typedKey === getKeyForChar(expected, layoutId) ? "shift" : "key";
 
   // Helper key (guided mode): typed by the child, shown with its finger,
   // but never scored — no keyErrors, no keyAttempts, no accuracy impact.
@@ -148,7 +172,7 @@ export function processKeystroke(
   // there is no score for it to count against in the first place.
   if (locked.guidedTyped.has(expected)) {
     if (!isCorrect) {
-      return { ...state, startedAt, lastMiss: expected, missEventId: state.missEventId + 1 };
+      return { ...state, startedAt, lastMiss: expected, lastMissKind, missEventId: state.missEventId + 1 };
     }
     const nextSlots = state.slots.slice();
     nextSlots[state.index] = { ...current, status: "guided", typedChar };
@@ -160,6 +184,7 @@ export function processKeystroke(
       guidedTypedCount: state.guidedTypedCount + 1,
       startedAt,
       lastMiss: null,
+      lastMissKind: null,
       correctEventId: state.correctEventId + 1,
       ...withCompletion(state, nextIndex, nextSlots),
     };
@@ -178,6 +203,7 @@ export function processKeystroke(
       keyAttempts: { ...state.keyAttempts, [expected]: (state.keyAttempts[expected] ?? 0) + 1 },
       startedAt,
       lastMiss: null,
+      lastMissKind: null,
       correctEventId: state.correctEventId + 1,
       ...withCompletion(state, nextIndex, nextSlots),
     };
@@ -192,7 +218,15 @@ export function processKeystroke(
     // put) — just a transient miss signal for a UI nudge (e.g. a shake).
     // Starter level: wrong key does nothing. keyErrors still records the
     // miss so the Report stage can surface "keys still warming up."
-    return { ...state, keyErrors, keyAttempts, startedAt, lastMiss: expected, missEventId: state.missEventId + 1 };
+    return {
+      ...state,
+      keyErrors,
+      keyAttempts,
+      startedAt,
+      lastMiss: expected,
+      lastMissKind,
+      missEventId: state.missEventId + 1,
+    };
   }
 
   const nextSlots = state.slots.slice();
@@ -209,6 +243,7 @@ export function processKeystroke(
       incorrectCount,
       startedAt,
       lastMiss: expected,
+      lastMissKind,
       missEventId: state.missEventId + 1,
     };
   }
@@ -224,6 +259,7 @@ export function processKeystroke(
     incorrectCount,
     startedAt,
     lastMiss: expected,
+    lastMissKind,
     missEventId: state.missEventId + 1,
     ...withCompletion(state, nextIndex, nextSlots),
   };
@@ -237,7 +273,7 @@ export function processBackspace(state: TypingState): TypingState {
   if (current.status !== "incorrect") return state;
   const nextSlots = state.slots.slice();
   nextSlots[state.index] = { ...current, status: "pending", typedChar: undefined };
-  return { ...state, slots: nextSlots, lastMiss: null };
+  return { ...state, slots: nextSlots, lastMiss: null, lastMissKind: null };
 }
 
 /** Accuracy over scored characters only, 0-1. 1 when nothing was attempted yet. */
@@ -259,10 +295,23 @@ export type StageTypingSummary = {
   keyErrors: Record<string, number>;
   keyAttempts: Record<string, number>;
   guidedTypedCount: number;
+  /**
+   * Time actually spent typing, summed per item: first keystroke to last.
+   * Session wall-clock is the wrong denominator for WPM — it also contains
+   * reading the Bible truth, the breather between key groups, and every
+   * pause between drills, so a child who never hesitated scored below one
+   * who wandered off mid-lesson. This is the honest one, and it's what
+   * makes two children's numbers comparable at all (see lib/day-score.ts).
+   *
+   * An item the child never started, or abandoned part-way, contributes 0 —
+   * there's no last-keystroke timestamp to measure to, and the alternative
+   * (counting to "now") would charge them for time they weren't typing.
+   */
+  activeMs: number;
 };
 
 export function emptySummary(): StageTypingSummary {
-  return { correctCount: 0, incorrectCount: 0, keyErrors: {}, keyAttempts: {}, guidedTypedCount: 0 };
+  return { correctCount: 0, incorrectCount: 0, keyErrors: {}, keyAttempts: {}, guidedTypedCount: 0, activeMs: 0 };
 }
 
 export function summarizeTypingState(state: TypingState): StageTypingSummary {
@@ -272,6 +321,8 @@ export function summarizeTypingState(state: TypingState): StageTypingSummary {
     keyErrors: { ...state.keyErrors },
     keyAttempts: { ...state.keyAttempts },
     guidedTypedCount: state.guidedTypedCount,
+    activeMs:
+      state.startedAt !== null && state.completedAt !== null ? Math.max(0, state.completedAt - state.startedAt) : 0,
   };
 }
 
@@ -288,6 +339,7 @@ export function mergeSummaries(a: StageTypingSummary, b: StageTypingSummary): St
     keyErrors: mergeCounts(a.keyErrors, b.keyErrors),
     keyAttempts: mergeCounts(a.keyAttempts, b.keyAttempts),
     guidedTypedCount: a.guidedTypedCount + b.guidedTypedCount,
+    activeMs: a.activeMs + b.activeMs,
   };
 }
 

@@ -1,0 +1,6 @@
+.timer {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground-muted);
+  font-size: 1rem;
+}

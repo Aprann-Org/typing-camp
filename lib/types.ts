@@ -9,9 +9,14 @@ export type Session = {
   startedAt: string;
   completedAt: string | null;
   durationSeconds: number;
+  /** Of `durationSeconds`, the part actually spent typing — see StageTypingSummary.activeMs. */
+  activeSeconds: number;
+  /** Over active typing time, not wall-clock. */
   wpm: number;
   /** 0-1. Excludes guided-mode (locked-key) characters. */
   accuracy: number;
+  /** The day's comparable score, 0-1000. Same number the report screen shows. */
+  score: number;
   charsTyped: number;
   verseCharsTypedUnassisted: number;
   /** Per-key miss counts, keyed by the character that was missed. */
@@ -71,6 +76,24 @@ export type DayDisplayText = {
 export type DayPracticeContent = {
   day: DayNumber;
   newKeys: string[];
+  /**
+   * Optional pedagogical clusters of newKeys (e.g. finger pairs) that the New
+   * Keys stage teaches as separate checkpoints, with a short breather between
+   * groups, instead of one uninterrupted run through every key. Order here
+   * is the teaching order — it does not need to match newKeys' order. Every
+   * key in newKeys must appear in exactly one group (validated at build by
+   * scripts/validate-content.ts). Omit to keep the stage as a single
+   * checkpoint, unchanged from before — most days don't have enough new
+   * keys to need splitting.
+   */
+  newKeyGroups?: string[][];
+  /**
+   * The day Shift (and so capitals) is taught. Exactly one day in the week
+   * sets this — content/days/index.ts's isShiftUnlocked derives from it, and
+   * the New Keys stage appends a Shift checkpoint on this day. Not a member of
+   * `newKeys` because Shift produces no character of its own.
+   */
+  teachesShift?: true;
   drills: DrillSpec[];
   /** Unlocked keys only — validated at build by scripts/validate-content.ts. */
   wordBank: string[];

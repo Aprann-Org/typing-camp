@@ -29,6 +29,22 @@
   100% { transform: scale(1); }
 }
 
+/*
+ * The Shift pinky. Deliberately NOT the settle bounce: a bounce reads as
+ * "tap this," and the whole point of Shift is that it stays down while the
+ * other hand presses. A slow breathing loop reads as "keep holding."
+ */
+.digitHold {
+  stroke-width: 0;
+  animation: holdGlow 1400ms ease-in-out infinite;
+}
+
+@keyframes holdGlow {
+  0% { opacity: 0.55; }
+  50% { opacity: 1; }
+  100% { opacity: 0.55; }
+}
+
 .label {
   font-family: var(--font-ui), sans-serif;
   font-size: 0.95rem;

@@ -1,0 +1,31 @@
+/* Two nested groups — see NinjaFlightGame.module.css's comment for why a
+   single element can't both transition a position and play a keyframe. */
+.carTrack {
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.car {
+  animation: bounce 380ms ease-out;
+}
+
+@keyframes bounce {
+  0% {
+    transform: translateY(0) scaleX(1);
+  }
+  30% {
+    transform: translateY(-3px) scaleX(1.08);
+  }
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carTrack {
+    transition: none;
+  }
+  .car {
+    animation: none;
+  }
+}
